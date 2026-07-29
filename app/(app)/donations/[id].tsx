@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { deleteDocument, updateDocument, useDocument } from '@/firebase/firestore';
+import { deleteDocument, updateDocument, useDocument } from '@/supabase/data';
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { LoadingScreen } from '@/components/LoadingScreen';
@@ -11,7 +11,7 @@ import type { Donation } from '@/types';
 
 export default function DonationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: donation, loading } = useDocument<Donation>('donations', id);
+  const { data: donation, loading } = useDocument<Donation>('husainiya_donations', id);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [draft, setDraft] = useState<Partial<Donation>>({});
@@ -34,7 +34,7 @@ export default function DonationDetailScreen() {
     }
     setSaving(true);
     try {
-      await updateDocument<Donation>('donations', donation.id, {
+      await updateDocument<Donation>('husainiya_donations', donation.id, {
         donorName: donorName.trim(),
         amount: numericAmount,
         purpose: purpose.trim(),
@@ -58,7 +58,7 @@ export default function DonationDetailScreen() {
         onPress: async () => {
           setDeleting(true);
           try {
-            await deleteDocument('donations', donation.id);
+            await deleteDocument('husainiya_donations', donation.id);
             router.back();
           } catch (err) {
             Alert.alert('Could not delete', (err as Error).message);

@@ -6,14 +6,8 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
-import {
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  type User,
-} from 'firebase/auth';
-import { auth, firebaseConfigured } from '@/firebase/config';
+import type { User } from '@supabase/supabase-js';
+import { supabase, supabaseConfigured } from '@/supabase/config';
 
 type AuthContextValue = {
   user: User | null;
@@ -31,30 +25,45 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    if (!firebaseConfigured) {
+    if (!supabaseConfigured) {
       setInitializing(false);
       return;
     }
-    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
-      setUser(nextUser);
+
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
       setInitializing(false);
     });
-    return unsubscribe;
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setInitializing(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       initializing,
-      configured: firebaseConfigured,
+      configured: supabaseConfigured,
       signIn: async (email, password) => {
-        await signInWithEmailAndPassword(auth, email.trim(), password);
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (error) throw error;
       },
       signOut: async () => {
-        await firebaseSignOut(auth);
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
       },
       resetPassword: async (email) => {
-        await sendPasswordResetEmail(auth, email.trim());
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+        if (error) throw error;
       },
     }),
     [user, initializing]

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { addDocument } from '@/firebase/firestore';
+import { addDocument } from '@/supabase/data';
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { colors } from '@/constants/theme';
@@ -25,7 +25,7 @@ export default function AddDonationScreen() {
     }
     setSaving(true);
     try {
-      await addDocument<Omit<Donation, 'id' | 'createdAt'>>('donations', {
+      await addDocument<Omit<Donation, 'id' | 'createdAt'>>('husainiya_donations', {
         donorName: donorName.trim(),
         amount: numericAmount,
         purpose: purpose.trim() || 'General',

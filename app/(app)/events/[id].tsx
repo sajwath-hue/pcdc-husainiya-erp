@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { deleteDocument, updateDocument, useDocument } from '@/firebase/firestore';
+import { deleteDocument, updateDocument, useDocument } from '@/supabase/data';
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { LoadingScreen } from '@/components/LoadingScreen';
@@ -11,7 +11,7 @@ import type { EventItem } from '@/types';
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: event, loading } = useDocument<EventItem>('events', id);
+  const { data: event, loading } = useDocument<EventItem>('husainiya_events', id);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [draft, setDraft] = useState<Partial<EventItem>>({});
@@ -33,7 +33,7 @@ export default function EventDetailScreen() {
     }
     setSaving(true);
     try {
-      await updateDocument<EventItem>('events', event.id, {
+      await updateDocument<EventItem>('husainiya_events', event.id, {
         title: title.trim(),
         date: date.trim(),
         location: location.trim(),
@@ -57,7 +57,7 @@ export default function EventDetailScreen() {
         onPress: async () => {
           setDeleting(true);
           try {
-            await deleteDocument('events', event.id);
+            await deleteDocument('husainiya_events', event.id);
             router.back();
           } catch (err) {
             Alert.alert('Could not delete', (err as Error).message);

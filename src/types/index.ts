@@ -7,7 +7,7 @@ export type Member = {
   membershipType: 'Regular' | 'Life' | 'Honorary';
   status: 'Active' | 'Inactive';
   joinDate: string;
-  createdAt: number;
+  createdAt: string;
 };
 
 export type Donation = {
@@ -18,7 +18,7 @@ export type Donation = {
   paymentMethod: 'Cash' | 'Bank Transfer' | 'Cheque' | 'Online';
   date: string;
   notes?: string;
-  createdAt: number;
+  createdAt: string;
 };
 
 export type EventItem = {
@@ -28,7 +28,5 @@ export type EventItem = {
   location: string;
   description?: string;
   capacity?: number;
-  createdAt: number;
+  createdAt: string;
 };
-
-export type CollectionName = 'members' | 'donations' | 'events';

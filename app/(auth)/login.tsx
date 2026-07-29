@@ -69,8 +69,8 @@ export default function LoginScreen() {
         {!configured ? (
           <View style={styles.warningBanner}>
             <Text style={styles.warningText}>
-              Firebase is not configured yet. Add your project keys to a .env file (see
-              .env.example) before signing in.
+              Supabase is not configured yet. Add your project URL and anon key to a .env file
+              (see .env.example) before signing in.
             </Text>
           </View>
         ) : null}
@@ -111,16 +111,15 @@ export default function LoginScreen() {
 function mapAuthError(err: unknown): string {
   const code = (err as { code?: string })?.code ?? '';
   switch (code) {
-    case 'auth/invalid-email':
-      return 'That email address looks invalid.';
-    case 'auth/user-not-found':
-    case 'auth/invalid-credential':
-    case 'auth/wrong-password':
+    case 'invalid_credentials':
       return 'Incorrect email or password.';
-    case 'auth/too-many-requests':
+    case 'email_not_confirmed':
+      return 'Please confirm your email address before signing in.';
+    case 'user_banned':
+      return 'This account has been disabled. Contact an administrator.';
+    case 'over_request_rate_limit':
+    case 'over_email_send_rate_limit':
       return 'Too many attempts. Please wait a moment and try again.';
-    case 'auth/network-request-failed':
-      return 'Network error. Check your connection and try again.';
     default:
       return (err as Error)?.message ?? 'Something went wrong. Please try again.';
   }

@@ -1,14 +1,14 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useCollection } from '@/firebase/firestore';
+import { useCollection } from '@/supabase/data';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { colors } from '@/constants/theme';
 import type { Donation, EventItem, Member } from '@/types';
 
 export default function ReportsScreen() {
-  const { data: members, loading: loadingMembers } = useCollection<Member>('members');
-  const { data: donations, loading: loadingDonations } = useCollection<Donation>('donations');
-  const { data: events, loading: loadingEvents } = useCollection<EventItem>('events');
+  const { data: members, loading: loadingMembers } = useCollection<Member>('husainiya_members');
+  const { data: donations, loading: loadingDonations } = useCollection<Donation>('husainiya_donations');
+  const { data: events, loading: loadingEvents } = useCollection<EventItem>('husainiya_events');
 
   if (loadingMembers || loadingDonations || loadingEvents) return <LoadingScreen />;
 

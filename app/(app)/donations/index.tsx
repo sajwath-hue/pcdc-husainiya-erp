@@ -1,14 +1,14 @@
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useCollection } from '@/firebase/firestore';
+import { useCollection } from '@/supabase/data';
 import { EmptyState } from '@/components/EmptyState';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { colors } from '@/constants/theme';
 import type { Donation } from '@/types';
 
 export default function DonationsListScreen() {
-  const { data: donations, loading } = useCollection<Donation>('donations');
+  const { data: donations, loading } = useCollection<Donation>('husainiya_donations');
 
   if (loading) return <LoadingScreen />;
 

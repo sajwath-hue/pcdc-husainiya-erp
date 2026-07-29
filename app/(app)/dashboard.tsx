@@ -2,15 +2,15 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
-import { useCollection } from '@/firebase/firestore';
+import { useCollection } from '@/supabase/data';
 import { colors } from '@/constants/theme';
 import type { Donation, EventItem, Member } from '@/types';
 
 export default function DashboardScreen() {
   const { user, signOut } = useAuth();
-  const { data: members } = useCollection<Member>('members');
-  const { data: donations } = useCollection<Donation>('donations');
-  const { data: events } = useCollection<EventItem>('events');
+  const { data: members } = useCollection<Member>('husainiya_members');
+  const { data: donations } = useCollection<Donation>('husainiya_donations');
+  const { data: events } = useCollection<EventItem>('husainiya_events');
 
   const totalDonations = donations.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
 

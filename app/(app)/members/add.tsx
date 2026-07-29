@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { addDocument } from '@/firebase/firestore';
+import { addDocument } from '@/supabase/data';
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { colors } from '@/constants/theme';
@@ -24,7 +24,7 @@ export default function AddMemberScreen() {
     }
     setSaving(true);
     try {
-      await addDocument<Omit<Member, 'id' | 'createdAt'>>('members', {
+      await addDocument<Omit<Member, 'id' | 'createdAt'>>('husainiya_members', {
         fullName: fullName.trim(),
         phone: phone.trim(),
         email: email.trim() || undefined,

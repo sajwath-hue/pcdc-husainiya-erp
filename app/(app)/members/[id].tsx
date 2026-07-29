@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { deleteDocument, updateDocument, useDocument } from '@/firebase/firestore';
+import { deleteDocument, updateDocument, useDocument } from '@/supabase/data';
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { LoadingScreen } from '@/components/LoadingScreen';
@@ -11,7 +11,7 @@ import type { Member } from '@/types';
 
 export default function MemberDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: member, loading } = useDocument<Member>('members', id);
+  const { data: member, loading } = useDocument<Member>('husainiya_members', id);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [draft, setDraft] = useState<Partial<Member>>({});
@@ -29,7 +29,7 @@ export default function MemberDetailScreen() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateDocument<Member>('members', member.id, {
+      await updateDocument<Member>('husainiya_members', member.id, {
         fullName: fullName.trim(),
         phone: phone.trim(),
         email: email.trim() || undefined,
@@ -45,7 +45,7 @@ export default function MemberDetailScreen() {
   };
 
   const toggleStatus = async () => {
-    await updateDocument<Member>('members', member.id, {
+    await updateDocument<Member>('husainiya_members', member.id, {
       status: member.status === 'Active' ? 'Inactive' : 'Active',
     });
   };
@@ -59,7 +59,7 @@ export default function MemberDetailScreen() {
         onPress: async () => {
           setDeleting(true);
           try {
-            await deleteDocument('members', member.id);
+            await deleteDocument('husainiya_members', member.id);
             router.back();
           } catch (err) {
             Alert.alert('Could not delete', (err as Error).message);

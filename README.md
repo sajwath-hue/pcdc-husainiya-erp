@@ -1,14 +1,14 @@
 # Al Husainiya ERP
 
-A React Native app built with Expo SDK 57, Expo Router, TypeScript, and Firebase
-(Authentication + Firestore) for managing Members, Donations, and Events.
+A React Native app built with Expo SDK 57, Expo Router, TypeScript, and Supabase
+(Auth + Postgres) for managing Members, Donations, and Events.
 
 ## Stack
 
 - Expo SDK 57 / React Native 0.86 / React 19.2
 - Expo Router 57 (file-based navigation, `Stack.Protected` auth guards)
 - TypeScript (strict mode)
-- Firebase JS SDK v12 (Auth with AsyncStorage persistence, Firestore)
+- Supabase JS v2 (Auth with AsyncStorage session persistence, Postgres via PostgREST + Realtime)
 - New Architecture enabled
 
 ## Project structure
@@ -21,43 +21,45 @@ app/
   (app)/                Protected area (Stack.Protected guard={!!user})
     _layout.tsx          Bottom tabs: Dashboard, Members, Donations, Events, Reports
     dashboard.tsx
-    members/             List, add, and detail/edit/delete screens (Firestore-backed)
+    members/             List, add, and detail/edit/delete screens (Supabase-backed)
     donations/
     events/
     reports.tsx
 src/
-  context/AuthContext.tsx  Firebase auth session as a React Context
-  firebase/config.ts       Firebase app/auth/firestore initialization
-  firebase/firestore.ts     Generic useCollection/useDocument hooks + CRUD helpers
+  context/AuthContext.tsx  Supabase auth session as a React Context
+  supabase/config.ts        Supabase client init (AsyncStorage session persistence)
+  supabase/data.ts           Generic useCollection/useDocument hooks + CRUD helpers
+  supabase/case.ts            camelCase (app) <-> snake_case (Postgres) mapping
   components/               Shared UI: FormField, PrimaryButton, EmptyState, LoadingScreen
   types/                     Domain types (Member, Donation, EventItem)
 ```
 
-## 1. Firebase setup (required before login will work)
+## 1. Backend
 
-1. Create a project at https://console.firebase.google.com.
-2. Enable **Authentication → Sign-in method → Email/Password**.
-3. Create a **Firestore Database** (start in production mode) and deploy the
-   rules in `firestore.rules` (requires any signed-in user for read/write —
-   tighten as needed for your real access model).
-4. Add a **Web app** in Project Settings to get your config values.
-5. Copy `.env.example` to `.env` and fill in the values:
+This app shares a Supabase project with another business (`epoch-venture-erp`,
+a precast concrete manufacturing company) to stay within the free-tier project
+limit. Data is kept isolated via table naming, not a separate project:
 
-   ```
-   EXPO_PUBLIC_FIREBASE_API_KEY=...
-   EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=...
-   EXPO_PUBLIC_FIREBASE_PROJECT_ID=...
-   EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=...
-   EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
-   EXPO_PUBLIC_FIREBASE_APP_ID=...
-   EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID=...
-   ```
+- `husainiya_members`
+- `husainiya_donations`
+- `husainiya_events`
 
-6. Create at least one user (Firebase Console → Authentication → Users → Add
-   user) to sign in with — this app does not expose public self-registration.
+All three have Row Level Security enabled with a policy allowing any
+**authenticated** user full read/write access (no public/anonymous access).
+Realtime is enabled on all three tables so list screens update live across
+devices.
+
+`.env` already contains the real project URL and anon/publishable key — both
+are safe to expose client-side (Supabase's own guidance: "Publishable keys
+can be safely shared publicly"), access is enforced by RLS, not by hiding
+the key. Do **not** ever put the `sb_secret_...` service-role key in this
+app; that one bypasses RLS entirely and must stay server-side only.
+
+To sign in, create a user in the Supabase dashboard: **Authentication → Users
+→ Add user**. This app does not expose public self-registration.
 
 Without a `.env` file, the app still boots and shows the Login screen with a
-visible "Firebase is not configured" banner instead of crashing or hanging.
+visible "Supabase is not configured" banner instead of crashing or hanging.
 
 ## 2. Install and run
 
@@ -104,9 +106,3 @@ Dependency versions were taken directly from Expo's own compatibility map
 (`bundledNativeModules.json`) for SDK 57, generated via the official
 `create-expo-app` CLI rather than hand-picked, so the whole set is
 mutually compatible with this Expo/React Native/React combination.
-
-`firebase/auth`'s package `exports` map resolves its `types` condition
-before the `react-native` condition, so TypeScript can't see
-`getReactNativePersistence` even though Metro resolves the correct runtime
-build. `src/types/firebase-auth.d.ts` adds a small module augmentation to
-restore that type; it has no effect on the actual runtime module Metro loads.

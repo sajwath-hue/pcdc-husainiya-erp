@@ -1,14 +1,14 @@
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useCollection } from '@/firebase/firestore';
+import { useCollection } from '@/supabase/data';
 import { EmptyState } from '@/components/EmptyState';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { colors } from '@/constants/theme';
 import type { EventItem } from '@/types';
 
 export default function EventsListScreen() {
-  const { data: events, loading } = useCollection<EventItem>('events');
+  const { data: events, loading } = useCollection<EventItem>('husainiya_events');
 
   if (loading) return <LoadingScreen />;
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { addDocument } from '@/firebase/firestore';
+import { addDocument } from '@/supabase/data';
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { colors } from '@/constants/theme';
@@ -26,7 +26,7 @@ export default function AddEventScreen() {
     }
     setSaving(true);
     try {
-      await addDocument<Omit<EventItem, 'id' | 'createdAt'>>('events', {
+      await addDocument<Omit<EventItem, 'id' | 'createdAt'>>('husainiya_events', {
         title: title.trim(),
         date: date.trim(),
         location: location.trim(),
