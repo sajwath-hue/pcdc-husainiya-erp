@@ -31,7 +31,11 @@ yarn-error.*
 *.pem
 
 # local env files
-.env
+# .env is intentionally tracked: it only contains the Supabase project URL
+# and publishable/anon key, both safe to expose client-side (RLS enforces
+# access, not secrecy of this key). Keeping it out of .gitignore also
+# ensures EAS Build's local-upload step (which excludes gitignored paths)
+# actually includes it.
 .env.local
 .env*.local
 
