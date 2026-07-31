@@ -30,8 +30,12 @@ export function useCollection<T extends { id: string }>(table: TableName) {
     setLoading(true);
     fetchAll();
 
+    // Screens can stay mounted in the background (e.g. tab navigators don't
+    // unmount previously-visited tabs), so multiple useCollection instances
+    // for the same table can be alive at once. Supabase's realtime client
+    // errors on duplicate channel topic names, so each mount needs its own.
     const channel = supabase
-      .channel(`${table}-collection`)
+      .channel(`${table}-collection-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table }, fetchAll)
       .subscribe();
 
@@ -78,7 +82,7 @@ export function useDocument<T extends { id: string }>(table: TableName, id: stri
     fetchOne();
 
     const channel = supabase
-      .channel(`${table}-${id}`)
+      .channel(`${table}-${id}-${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table, filter: `id=eq.${id}` },
