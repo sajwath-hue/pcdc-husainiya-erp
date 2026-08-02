@@ -36,7 +36,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#0F172A"
         }
-      ]
+      ],
+      "./plugins/withAndroidNdkVersion"
     ],
     "experiments": {
       "typedRoutes": true
