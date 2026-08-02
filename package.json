@@ -29,6 +29,7 @@
     "react-native-url-polyfill": "^2.0.0"
   },
   "devDependencies": {
+    "@react-native/metro-config": "0.86.0",
     "@types/react": "~19.2.2",
     "babel-preset-expo": "~57.0.4",
     "typescript": "~6.0.3"
