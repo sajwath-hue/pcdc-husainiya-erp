@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell } = require("electron");
+const { app, BrowserWindow, shell, dialog } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
 const http = require("node:http");
@@ -12,7 +12,34 @@ const isDev = !app.isPackaged;
 let serverProcess = null;
 let mainWindow = null;
 
-function waitForServer(url, timeoutMs = 20000) {
+const logPath = app.isPackaged ? path.join(app.getPath("userData"), "launch.log") : null;
+function log(message) {
+  console.log(message);
+  if (logPath) {
+    try {
+      fs.appendFileSync(logPath, `[${new Date().toISOString()}] ${message}\n`);
+    } catch {
+      // Logging is best-effort — never let it take down startup.
+    }
+  }
+}
+
+// Prevent double-clicking the exe multiple times (or launching it while
+// already running) from spawning duplicate windows and duplicate servers
+// fighting over the same port.
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
+
+function waitForServer(url, timeoutMs = 30000) {
   const start = Date.now();
   return new Promise((resolve, reject) => {
     const attempt = () => {
@@ -20,9 +47,9 @@ function waitForServer(url, timeoutMs = 20000) {
         res.resume();
         resolve();
       });
-      req.on("error", () => {
+      req.on("error", (err) => {
         if (Date.now() - start > timeoutMs) {
-          reject(new Error(`Server at ${url} did not start in time`));
+          reject(new Error(`Server at ${url} did not start in time (${err.message})`));
         } else {
           setTimeout(attempt, 300);
         }
@@ -42,8 +69,19 @@ function ensureServerExtracted() {
 
   if (!fs.existsSync(serverEntry)) {
     const archivePath = path.join(process.resourcesPath, "standalone.tar.gz");
+    log(`Extracting ${archivePath} to ${extractDir}`);
     fs.mkdirSync(extractDir, { recursive: true });
-    execFileSync("tar", ["-xzf", archivePath, "-C", extractDir]);
+    try {
+      execFileSync("tar", ["-xzf", archivePath, "-C", extractDir], { stdio: "pipe" });
+    } catch (err) {
+      throw new Error(
+        `Failed to extract app files (tar -xzf failed): ${err.message}\n${err.stderr ? err.stderr.toString() : ""}`,
+      );
+    }
+  }
+
+  if (!fs.existsSync(serverEntry)) {
+    throw new Error(`Extraction succeeded but ${serverEntry} is still missing.`);
   }
 
   return serverEntry;
@@ -51,15 +89,31 @@ function ensureServerExtracted() {
 
 function startStandaloneServer() {
   const serverEntry = ensureServerExtracted();
+  log(`Starting server: ${process.execPath} ${serverEntry}`);
 
   serverProcess = spawn(process.execPath, [serverEntry], {
     env: { ...process.env, PORT: String(PROD_PORT), HOSTNAME: "127.0.0.1" },
-    stdio: "inherit",
+    stdio: ["ignore", "pipe", "pipe"],
   });
 
-  serverProcess.on("exit", (code) => {
-    if (code && code !== 0) console.error(`Server process exited with code ${code}`);
+  serverProcess.stdout.on("data", (d) => log(`[server] ${d}`.trimEnd()));
+  serverProcess.stderr.on("data", (d) => log(`[server:err] ${d}`.trimEnd()));
+
+  serverProcess.on("error", (err) => {
+    log(`Server process failed to start: ${err.message}`);
   });
+  serverProcess.on("exit", (code) => {
+    if (code && code !== 0) log(`Server process exited with code ${code}`);
+  });
+}
+
+function showFatalError(title, err) {
+  log(`FATAL: ${title}: ${err.message}`);
+  const detail = logPath
+    ? `${err.message}\n\nDetails were saved to:\n${logPath}`
+    : err.message;
+  dialog.showErrorBox(title, detail);
+  app.quit();
 }
 
 async function createWindow() {
@@ -70,12 +124,16 @@ async function createWindow() {
     minHeight: 640,
     title: "School Pro — Manbaul Huda Arabic College",
     autoHideMenuBar: true,
+    backgroundColor: "#0b1220",
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
+
+  mainWindow.once("ready-to-show", () => mainWindow.show());
 
   // Open external links (e.g. document links) in the OS browser, not the app window.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -85,24 +143,37 @@ async function createWindow() {
 
   if (isDev) {
     await mainWindow.loadURL(DEV_URL);
-  } else {
+    return;
+  }
+
+  await mainWindow.loadFile(path.join(__dirname, "loading.html"));
+  mainWindow.show();
+
+  try {
     startStandaloneServer();
     await waitForServer(PROD_URL);
     await mainWindow.loadURL(PROD_URL);
+  } catch (err) {
+    showFatalError("School Pro couldn't start", err);
   }
 }
 
-app.whenReady().then(createWindow);
+if (gotLock) {
+  app.whenReady().then(() => {
+    log(`App starting. isPackaged=${app.isPackaged} version=${app.getVersion()}`);
+    createWindow();
+  });
 
-app.on("window-all-closed", () => {
-  if (serverProcess) serverProcess.kill();
-  if (process.platform !== "darwin") app.quit();
-});
+  app.on("window-all-closed", () => {
+    if (serverProcess) serverProcess.kill();
+    if (process.platform !== "darwin") app.quit();
+  });
 
-app.on("before-quit", () => {
-  if (serverProcess) serverProcess.kill();
-});
+  app.on("before-quit", () => {
+    if (serverProcess) serverProcess.kill();
+  });
 
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
-});
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+}
