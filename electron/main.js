@@ -1,7 +1,8 @@
 const { app, BrowserWindow, shell } = require("electron");
 const path = require("node:path");
+const fs = require("node:fs");
 const http = require("node:http");
-const { spawn } = require("node:child_process");
+const { spawn, execFileSync } = require("node:child_process");
 
 const DEV_URL = "http://localhost:3000";
 const PROD_PORT = 3300;
@@ -31,11 +32,25 @@ function waitForServer(url, timeoutMs = 20000) {
   });
 }
 
+function ensureServerExtracted() {
+  // Shipped as resources/standalone.tar.gz (see electron/prepare-standalone.js
+  // for why it's an archive rather than a plain folder). Extract once into
+  // userData, which is writable even when the app itself is installed
+  // read-only (e.g. Program Files on Windows).
+  const extractDir = path.join(app.getPath("userData"), "standalone");
+  const serverEntry = path.join(extractDir, "standalone", "server.js");
+
+  if (!fs.existsSync(serverEntry)) {
+    const archivePath = path.join(process.resourcesPath, "standalone.tar.gz");
+    fs.mkdirSync(extractDir, { recursive: true });
+    execFileSync("tar", ["-xzf", archivePath, "-C", extractDir]);
+  }
+
+  return serverEntry;
+}
+
 function startStandaloneServer() {
-  // Produced by `next build` with `output: "standalone"` in next.config.ts,
-  // then copied next to this file by `npm run electron:build` — see
-  // package.json's electron:build script and electron-builder's "extraResources".
-  const serverEntry = path.join(process.resourcesPath, "standalone", "server.js");
+  const serverEntry = ensureServerExtracted();
 
   serverProcess = spawn(process.execPath, [serverEntry], {
     env: { ...process.env, PORT: String(PROD_PORT), HOSTNAME: "127.0.0.1" },

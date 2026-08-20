@@ -20,12 +20,14 @@
     },
     "files": [
       "electron/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/**/*"
     ],
+    "npmRebuild": false,
     "extraResources": [
       {
-        "from": ".next/standalone",
-        "to": "standalone"
+        "from": "electron/resources/standalone.tar.gz",
+        "to": "standalone.tar.gz"
       }
     ],
     "win": {
