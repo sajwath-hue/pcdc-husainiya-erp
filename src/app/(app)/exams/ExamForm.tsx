@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Field, Input, Select, SubmitButton, FormError } from "@/components/ui/Form";
 import { createExamAction, updateExamAction, type FormState } from "./actions";
 import type { AcademicYear, ClassRow, Subject } from "@/lib/types";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 const initialState: FormState = { error: null };
 
@@ -31,17 +32,18 @@ export function ExamForm({
 }) {
   const action = exam ? updateExamAction : createExamAction;
   const [state, formAction] = useActionState(action, initialState);
+  const t = useDictionary();
 
   return (
     <form action={formAction} className="max-w-lg space-y-4">
       {exam && <input type="hidden" name="id" value={exam.id} />}
-      <Field label="Exam name" hint="e.g. Mid Term, Final Term, Class Test 1">
+      <Field label={t.exams.examName} hint="e.g. Mid Term, Final Term, Class Test 1">
         <Input name="name" required defaultValue={exam?.name} placeholder="Mid Term" />
       </Field>
-      <Field label="Academic year">
+      <Field label={t.classHub.academicYear}>
         <Select name="academic_year_id" required defaultValue={exam?.academic_year_id ?? selectedYearId ?? ""}>
           <option value="" disabled>
-            Select academic year
+            {t.students.selectAcademicYear}
           </option>
           {years.map((y) => (
             <option key={y.id} value={y.id}>
@@ -51,10 +53,10 @@ export function ExamForm({
         </Select>
       </Field>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Class">
+        <Field label={t.common.class}>
           <Select name="class_id" required defaultValue={exam?.class_id ?? ""}>
             <option value="" disabled>
-              Select class
+              {t.students.selectClassPlaceholder}
             </option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
@@ -63,10 +65,10 @@ export function ExamForm({
             ))}
           </Select>
         </Field>
-        <Field label="Subject">
+        <Field label={t.common.subject}>
           <Select name="subject_id" required defaultValue={exam?.subject_id ?? ""}>
             <option value="" disabled>
-              Select subject
+              {t.exams.selectSubject}
             </option>
             {subjects.map((s) => (
               <option key={s.id} value={s.id}>
@@ -77,18 +79,18 @@ export function ExamForm({
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Term">
+        <Field label={t.exams.term}>
           <Input name="term" defaultValue={exam?.term ?? ""} placeholder="Term 1" />
         </Field>
-        <Field label="Exam date">
+        <Field label={t.exams.examDate}>
           <Input type="date" name="exam_date" defaultValue={exam?.exam_date ?? ""} />
         </Field>
       </div>
-      <Field label="Total marks">
+      <Field label={t.exams.totalMarks}>
         <Input type="number" name="total_marks" min={1} defaultValue={exam?.total_marks ?? 100} />
       </Field>
       <FormError error={state.error} />
-      <SubmitButton>{exam ? "Save changes" : "Create exam"}</SubmitButton>
+      <SubmitButton>{exam ? t.common.saveChanges : t.exams.addExam}</SubmitButton>
     </form>
   );
 }

@@ -5,14 +5,15 @@ import { saveAttendanceAction, type AttendanceState } from "./actions";
 import { SubmitButton } from "@/components/ui/Form";
 import { initials } from "@/lib/utils";
 import type { Student } from "@/lib/types";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 const initialState: AttendanceState = { error: null, success: false };
 
 const STATUS_OPTIONS = [
-  { value: "present", label: "Present", className: "peer-checked:bg-emerald-600 peer-checked:text-white" },
-  { value: "absent", label: "Absent", className: "peer-checked:bg-red-600 peer-checked:text-white" },
-  { value: "late", label: "Late", className: "peer-checked:bg-amber-600 peer-checked:text-white" },
-  { value: "leave", label: "Leave", className: "peer-checked:bg-sky-600 peer-checked:text-white" },
+  { value: "present", key: "present" as const, className: "peer-checked:bg-emerald-600 peer-checked:text-white" },
+  { value: "absent", key: "absent" as const, className: "peer-checked:bg-red-600 peer-checked:text-white" },
+  { value: "late", key: "late" as const, className: "peer-checked:bg-amber-600 peer-checked:text-white" },
+  { value: "leave", key: "leave" as const, className: "peer-checked:bg-sky-600 peer-checked:text-white" },
 ];
 
 export function AttendanceForm({
@@ -27,6 +28,7 @@ export function AttendanceForm({
   existing: Map<string, string>;
 }) {
   const [state, formAction] = useActionState(saveAttendanceAction, initialState);
+  const t = useDictionary();
 
   return (
     <form action={formAction} className="space-y-4">
@@ -37,9 +39,9 @@ export function AttendanceForm({
         <table className="w-full text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-4 py-3">Student</th>
-              <th className="px-4 py-3">Roll</th>
-              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">{t.common.student}</th>
+              <th className="px-4 py-3">{t.attendance.rollNo}</th>
+              <th className="px-4 py-3">{t.common.status}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -71,7 +73,7 @@ export function AttendanceForm({
                           <span
                             className={`inline-block rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-500 ${opt.className}`}
                           >
-                            {opt.label}
+                            {t.attendance[opt.key]}
                           </span>
                         </label>
                       ))}
@@ -85,8 +87,8 @@ export function AttendanceForm({
       </div>
 
       <div className="flex items-center gap-3">
-        <SubmitButton>Save attendance</SubmitButton>
-        {state.success && <span className="text-sm font-medium text-emerald-600">Attendance saved.</span>}
+        <SubmitButton>{t.attendance.saveAttendance}</SubmitButton>
+        {state.success && <span className="text-sm font-medium text-emerald-600">{t.attendance.attendanceSaved}</span>}
         {state.error && <span className="text-sm font-medium text-red-600">{state.error}</span>}
       </div>
     </form>

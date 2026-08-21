@@ -3,6 +3,8 @@ import { getAcademicYearContext } from "@/lib/data/academic-year";
 import { Breadcrumb, PageHeader, EmptyState } from "@/components/ui/PageHeader";
 import { AttendanceForm } from "./AttendanceForm";
 import type { ClassRow, Student } from "@/lib/types";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -13,6 +15,7 @@ export default async function AttendancePage({
 }: {
   searchParams: Promise<{ class?: string; date?: string }>;
 }) {
+  const t = getDictionary(await getLocale());
   const { class: classId, date } = await searchParams;
   const selectedDate = date || todayIso();
 
@@ -45,12 +48,12 @@ export default async function AttendancePage({
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Attendance" }]} />
-      <PageHeader title="Attendance" description="Mark and review daily attendance by class." />
+      <Breadcrumb items={[{ label: t.nav.dashboard, href: "/dashboard" }, { label: t.nav.attendance }]} />
+      <PageHeader title={t.attendance.title} description={t.attendance.subtitle} />
 
       <form className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-500">Class</label>
+          <label className="mb-1 block text-xs font-medium text-slate-500">{t.common.class}</label>
           <select
             name="class"
             defaultValue={activeClassId ?? ""}
@@ -64,7 +67,7 @@ export default async function AttendancePage({
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-500">Date</label>
+          <label className="mb-1 block text-xs font-medium text-slate-500">{t.common.date}</label>
           <input
             type="date"
             name="date"
@@ -74,16 +77,16 @@ export default async function AttendancePage({
           />
         </div>
         <button type="submit" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">
-          Load
+          {t.attendance.load}
         </button>
       </form>
 
       {classList.length === 0 ? (
-        <EmptyState title="No classes yet" description="Add a class before marking attendance." />
+        <EmptyState title={t.attendance.noClassesYet} description={t.attendance.addClassBeforeAttendance} />
       ) : !activeClass ? (
-        <EmptyState title="Class not found" />
+        <EmptyState title={t.attendance.classNotFound} />
       ) : students.length === 0 ? (
-        <EmptyState title="No students in this class" description="Enroll students to start marking attendance." />
+        <EmptyState title={t.attendance.noStudentsInClass} description={t.attendance.enrollStudentsBody} />
       ) : (
         <AttendanceForm classId={activeClass.id} date={selectedDate} students={students} existing={existing} />
       )}
