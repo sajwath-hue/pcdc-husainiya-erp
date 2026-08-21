@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { GraduationCap } from "lucide-react";
 import { NAV_ITEMS } from "@/lib/nav";
 import { cn, initials } from "@/lib/utils";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 export function Sidebar({
   fullName,
@@ -14,6 +15,7 @@ export function Sidebar({
   role: string;
 }) {
   const pathname = usePathname();
+  const t = useDictionary();
 
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col bg-[#0b1730] text-slate-300">
@@ -28,7 +30,7 @@ export function Sidebar({
       </div>
 
       <div className="px-5 pb-2 pt-4 text-[11px] font-semibold tracking-wider text-slate-500">
-        WORKSPACE
+        {t.nav.workspace}
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4">
@@ -48,7 +50,7 @@ export function Sidebar({
               )}
             >
               <Icon size={17} className="shrink-0" />
-              <span className="truncate">{item.label}</span>
+              <span className="truncate">{t.nav[item.labelKey]}</span>
             </Link>
           );
         })}

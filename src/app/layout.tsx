@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { isRtl } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
+import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,13 +21,18 @@ export const metadata: Metadata = {
     "School management system for Manbaul Huda Arabic College — classes, students, teachers, attendance, exams, fees and more.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getLocale();
+
   return (
     <html
-      lang="en"
+      lang={locale}
+      dir={isRtl(locale) ? "rtl" : "ltr"}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[var(--background)]">{children}</body>
+      <body className="min-h-full flex flex-col bg-[var(--background)]">
+        <LocaleProvider initialLocale={locale}>{children}</LocaleProvider>
+      </body>
     </html>
   );
 }
