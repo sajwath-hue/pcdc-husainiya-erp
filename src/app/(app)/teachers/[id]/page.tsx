@@ -8,8 +8,11 @@ import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { initials } from "@/lib/utils";
 import { deleteTeacherAction, toggleTeacherStatusAction } from "../actions";
 import type { ClassRow, Subject } from "@/lib/types";
+import { format, getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 export default async function TeacherProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const t = getDictionary(await getLocale());
   const { id } = await params;
   const supabase = await createClient();
 
@@ -28,8 +31,8 @@ export default async function TeacherProfilePage({ params }: { params: Promise<{
     <div className="space-y-6">
       <Breadcrumb
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Teachers", href: "/teachers" },
+          { label: t.nav.dashboard, href: "/dashboard" },
+          { label: t.nav.teachers, href: "/teachers" },
           { label: teacher.full_name },
         ]}
       />
@@ -47,7 +50,7 @@ export default async function TeacherProfilePage({ params }: { params: Promise<{
                 <input type="hidden" name="id" value={teacher.id} />
                 <input type="hidden" name="status" value={teacher.status} />
                 <button type="submit">
-                  <Badge tone={teacher.status}>{teacher.status}</Badge>
+                  <Badge tone={teacher.status}>{teacher.status === "active" ? t.common.active : t.common.inactive}</Badge>
                 </button>
               </form>
             </div>
@@ -58,16 +61,16 @@ export default async function TeacherProfilePage({ params }: { params: Promise<{
             href={`/teachers/${teacher.id}/edit`}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
-            <Pencil size={14} /> Edit Profile
+            <Pencil size={14} /> {t.students.editProfile}
           </Link>
           <form action={deleteTeacherAction}>
             <input type="hidden" name="id" value={teacher.id} />
             <ConfirmButton
-              message={`Remove ${teacher.full_name}? This cannot be undone.`}
+              message={format(t.teachers.confirmRemoveTeacher, { name: teacher.full_name })}
               className="h-auto w-auto rounded-lg border border-red-200 px-3.5 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
             >
               <span className="inline-flex items-center gap-2">
-                <Trash2 size={14} /> Delete
+                <Trash2 size={14} /> {t.common.delete}
               </span>
             </ConfirmButton>
           </form>
@@ -76,7 +79,7 @@ export default async function TeacherProfilePage({ params }: { params: Promise<{
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800">Contact</h2>
+          <h2 className="mb-3 text-sm font-semibold text-slate-800">{t.teachers.contact}</h2>
           <div className="space-y-2 text-sm text-slate-600">
             <p className="flex items-center gap-2">
               <Phone size={14} className="text-slate-400" /> {teacher.phone || "—"}
@@ -88,7 +91,7 @@ export default async function TeacherProfilePage({ params }: { params: Promise<{
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800">Subjects</h2>
+          <h2 className="mb-3 text-sm font-semibold text-slate-800">{t.teachers.subjects}</h2>
           <div className="flex flex-wrap gap-2">
             {subjects.length ? (
               subjects.map((s) => (
@@ -97,13 +100,13 @@ export default async function TeacherProfilePage({ params }: { params: Promise<{
                 </span>
               ))
             ) : (
-              <p className="text-sm text-slate-400">No subjects assigned.</p>
+              <p className="text-sm text-slate-400">{t.teachers.noSubjectsAssigned}</p>
             )}
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:col-span-2">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800">Assigned Classes</h2>
+          <h2 className="mb-3 text-sm font-semibold text-slate-800">{t.teachers.assignedClasses}</h2>
           <div className="flex flex-wrap gap-2">
             {classes.length ? (
               classes.map((c) => (
@@ -116,7 +119,7 @@ export default async function TeacherProfilePage({ params }: { params: Promise<{
                 </Link>
               ))
             ) : (
-              <p className="text-sm text-slate-400">No classes assigned.</p>
+              <p className="text-sm text-slate-400">{t.teachers.noClassesAssigned}</p>
             )}
           </div>
         </div>

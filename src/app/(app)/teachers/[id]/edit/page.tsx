@@ -3,8 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { Breadcrumb, PageHeader } from "@/components/ui/PageHeader";
 import { TeacherForm } from "../../TeacherForm";
 import type { ClassRow, Subject, Teacher } from "@/lib/types";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 export default async function EditTeacherPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = getDictionary(await getLocale());
   const { id } = await params;
   const supabase = await createClient();
 
@@ -22,12 +25,12 @@ export default async function EditTeacherPage({ params }: { params: Promise<{ id
     <div className="space-y-6">
       <Breadcrumb
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Teachers", href: "/teachers" },
-          { label: "Edit" },
+          { label: t.nav.dashboard, href: "/dashboard" },
+          { label: t.nav.teachers, href: "/teachers" },
+          { label: t.common.edit },
         ]}
       />
-      <PageHeader title={`Edit ${teacher.full_name}`} />
+      <PageHeader title={`${t.common.edit} ${teacher.full_name}`} />
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <TeacherForm
           teacher={teacher as Teacher}

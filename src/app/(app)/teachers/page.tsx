@@ -5,12 +5,15 @@ import { Breadcrumb, PageHeader, EmptyState } from "@/components/ui/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { initials } from "@/lib/utils";
 import type { ClassRow, Subject, Teacher } from "@/lib/types";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 export default async function TeachersPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; class?: string }>;
 }) {
+  const dict = getDictionary(await getLocale());
   const { q, class: classFilter } = await searchParams;
   const supabase = await createClient();
 
@@ -55,16 +58,16 @@ export default async function TeachersPage({
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Teachers" }]} />
+      <Breadcrumb items={[{ label: dict.nav.dashboard, href: "/dashboard" }, { label: dict.nav.teachers }]} />
       <PageHeader
-        title="Teachers"
-        description="Manage faculty profiles, subjects, and class assignments."
+        title={dict.teachers.title}
+        description={dict.teachers.subtitle}
         action={
           <Link
             href="/teachers/new"
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
           >
-            <Plus size={16} /> Add Teacher
+            <Plus size={16} /> {dict.teachers.addTeacher}
           </Link>
         }
       />
@@ -74,60 +77,60 @@ export default async function TeachersPage({
           type="search"
           name="q"
           defaultValue={q}
-          placeholder="Search name, employee ID, email or phone..."
+          placeholder={dict.teachers.searchPlaceholder}
           className="w-full max-w-md rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
         />
       </form>
 
       {list.length === 0 ? (
-        <EmptyState title="No teachers found" description="Add a teacher to assign them to subjects and classes." />
+        <EmptyState title={dict.teachers.noTeachersFound} description={dict.teachers.noTeachersFoundBody} />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {list.map((t) => (
-            <div key={t.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          {list.map((teacher) => (
+            <div key={teacher.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
-                    {initials(t.full_name)}
+                    {initials(teacher.full_name)}
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800">{t.full_name}</p>
-                    <p className="text-xs text-slate-400">{t.employee_id}</p>
+                    <p className="font-semibold text-slate-800">{teacher.full_name}</p>
+                    <p className="text-xs text-slate-400">{teacher.employee_id}</p>
                   </div>
                 </div>
-                <Badge tone={t.status}>{t.status}</Badge>
+                <Badge tone={teacher.status}>{teacher.status === "active" ? dict.common.active : dict.common.inactive}</Badge>
               </div>
 
               <div className="mb-3 grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <p className="font-medium text-slate-400">SUBJECTS</p>
-                  <p className="mt-0.5 text-slate-700">{(subjectsByTeacher.get(t.id) ?? []).join(", ") || "—"}</p>
+                  <p className="font-medium uppercase text-slate-400">{dict.teachers.subjects}</p>
+                  <p className="mt-0.5 text-slate-700">{(subjectsByTeacher.get(teacher.id) ?? []).join(", ") || "—"}</p>
                 </div>
                 <div>
-                  <p className="font-medium text-slate-400">ASSIGNED CLASSES</p>
-                  <p className="mt-0.5 text-slate-700">{(classesByTeacher.get(t.id) ?? []).join(", ") || "—"}</p>
+                  <p className="font-medium uppercase text-slate-400">{dict.teachers.assignedClasses}</p>
+                  <p className="mt-0.5 text-slate-700">{(classesByTeacher.get(teacher.id) ?? []).join(", ") || "—"}</p>
                 </div>
               </div>
 
               <div className="mb-4 space-y-1 text-xs text-slate-500">
-                {t.phone && (
+                {teacher.phone && (
                   <p className="flex items-center gap-1.5">
-                    <Phone size={12} /> {t.phone}
+                    <Phone size={12} /> {teacher.phone}
                   </p>
                 )}
-                {t.email && (
+                {teacher.email && (
                   <p className="flex items-center gap-1.5">
-                    <Mail size={12} /> {t.email}
+                    <Mail size={12} /> {teacher.email}
                   </p>
                 )}
               </div>
 
               <div className="flex items-center justify-between">
-                <Link href={`/teachers/${t.id}`} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                  View Profile
+                <Link href={`/teachers/${teacher.id}`} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                  {dict.teachers.viewProfile}
                 </Link>
-                <Link href={`/teachers/${t.id}/edit`} className="text-xs font-medium text-blue-600 hover:underline">
-                  Edit
+                <Link href={`/teachers/${teacher.id}/edit`} className="text-xs font-medium text-blue-600 hover:underline">
+                  {dict.common.edit}
                 </Link>
               </div>
             </div>
