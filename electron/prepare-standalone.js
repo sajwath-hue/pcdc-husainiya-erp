@@ -30,6 +30,19 @@ fs.cpSync(path.join(root, ".next", "static"), path.join(standaloneDir, ".next", 
   recursive: true,
 });
 
+// NEXT_PUBLIC_* vars get inlined into the browser bundle at build time, but
+// server-rendered pages (e.g. the login page's "is Supabase configured?"
+// check) read process.env live at runtime — Next's standalone server.js
+// loads .env* files from its own directory on startup, so write one here
+// with whatever values this build was run with, matching the browser bundle.
+const envVars = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+  .filter((key) => process.env[key])
+  .map((key) => `${key}=${process.env[key]}`)
+  .join("\n");
+if (envVars) {
+  fs.writeFileSync(path.join(standaloneDir, ".env.production.local"), envVars + "\n");
+}
+
 fs.mkdirSync(resourcesDir, { recursive: true });
 if (fs.existsSync(archivePath)) fs.rmSync(archivePath);
 
