@@ -2,17 +2,19 @@
 
 import { useActionState } from "react";
 import { changePasswordAction, type ChangePasswordState } from "./actions";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 const initialState: ChangePasswordState = { error: null, success: false };
 
 export function ChangePasswordForm() {
   const [state, formAction, pending] = useActionState(changePasswordAction, initialState);
+  const t = useDictionary();
 
   return (
     <form action={formAction} className="max-w-sm space-y-4">
       <div>
         <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700">
-          New password
+          {t.changePassword.newPassword}
         </label>
         <input
           id="password"
@@ -25,7 +27,7 @@ export function ChangePasswordForm() {
       </div>
       <div>
         <label htmlFor="confirm" className="mb-1.5 block text-sm font-medium text-slate-700">
-          Confirm new password
+          {t.changePassword.confirmPassword}
         </label>
         <input
           id="confirm"
@@ -42,7 +44,7 @@ export function ChangePasswordForm() {
       )}
       {state.success && (
         <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-600">
-          Password updated.
+          {t.changePassword.success}
         </p>
       )}
 
@@ -51,7 +53,7 @@ export function ChangePasswordForm() {
         disabled={pending}
         className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
       >
-        {pending ? "Updating..." : "Update password"}
+        {pending ? t.changePassword.updating : t.changePassword.submit}
       </button>
     </form>
   );

@@ -5,14 +5,16 @@ import { Breadcrumb, PageHeader, EmptyState } from "@/components/ui/PageHeader";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { addSlotAction, deleteSlotAction } from "./actions";
 import type { ClassRow, Subject, Teacher } from "@/lib/types";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
-const DAYS = [
-  { value: 1, label: "Monday" },
-  { value: 2, label: "Tuesday" },
-  { value: 3, label: "Wednesday" },
-  { value: 4, label: "Thursday" },
-  { value: 5, label: "Friday" },
-  { value: 6, label: "Saturday" },
+const DAY_VALUES = [
+  { value: 1, key: "monday" as const },
+  { value: 2, key: "tuesday" as const },
+  { value: 3, key: "wednesday" as const },
+  { value: 4, key: "thursday" as const },
+  { value: 5, key: "friday" as const },
+  { value: 6, key: "saturday" as const },
 ];
 
 export default async function TimetablePage({
@@ -20,6 +22,8 @@ export default async function TimetablePage({
 }: {
   searchParams: Promise<{ class?: string }>;
 }) {
+  const t = getDictionary(await getLocale());
+  const DAYS = DAY_VALUES.map((d) => ({ value: d.value, label: t.timetable[d.key] }));
   const { class: classId } = await searchParams;
   const supabase = await createClient();
   const { selected } = await getAcademicYearContext();
@@ -57,12 +61,12 @@ export default async function TimetablePage({
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Timetable" }]} />
-      <PageHeader title="Timetable" description="Weekly period schedule by class." />
+      <Breadcrumb items={[{ label: t.nav.dashboard, href: "/dashboard" }, { label: t.nav.timetable }]} />
+      <PageHeader title={t.timetable.title} description={t.timetable.subtitle} />
 
       <form className="flex items-end gap-3">
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-500">Class</label>
+          <label className="mb-1 block text-xs font-medium text-slate-500">{t.common.class}</label>
           <select name="class" defaultValue={activeClassId ?? ""} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
             {classList.map((c) => (
               <option key={c.id} value={c.id}>
@@ -72,19 +76,19 @@ export default async function TimetablePage({
           </select>
         </div>
         <button type="submit" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">
-          Load
+          {t.attendance.load}
         </button>
       </form>
 
       {classList.length === 0 ? (
-        <EmptyState title="No classes yet" />
+        <EmptyState title={t.classes.noClassesYet} />
       ) : (
         <>
           <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-3">Period</th>
+                  <th className="px-4 py-3">{t.timetable.period}</th>
                   {DAYS.map((d) => (
                     <th key={d.value} className="px-4 py-3">
                       {d.label}
@@ -106,7 +110,7 @@ export default async function TimetablePage({
                                 <span className="font-medium">{subjectById.get(slot.subject_id ?? "") ?? "—"}</span>
                                 <form action={deleteSlotAction}>
                                   <input type="hidden" name="id" value={slot.id} />
-                                  <ConfirmButton message="Remove this slot?" className="text-blue-400 hover:text-red-600">
+                                  <ConfirmButton message={t.timetable.confirmRemoveSlot} className="text-blue-400 hover:text-red-600">
                                     <Trash2 size={12} />
                                   </ConfirmButton>
                                 </form>
@@ -131,11 +135,11 @@ export default async function TimetablePage({
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="mb-3 text-sm font-semibold text-slate-800">Add a period slot</h3>
+            <h3 className="mb-3 text-sm font-semibold text-slate-800">{t.timetable.addPeriodSlot}</h3>
             <form action={addSlotAction} className="flex flex-wrap items-end gap-3">
               <input type="hidden" name="class_id" value={activeClassId ?? ""} />
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-500">Day</label>
+                <label className="mb-1 block text-xs font-medium text-slate-500">{t.timetable.day}</label>
                 <select name="day_of_week" required className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
                   {DAYS.map((d) => (
                     <option key={d.value} value={d.value}>
@@ -145,11 +149,11 @@ export default async function TimetablePage({
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-500">Period</label>
+                <label className="mb-1 block text-xs font-medium text-slate-500">{t.timetable.period}</label>
                 <input type="number" name="period" min={1} max={12} required defaultValue={1} className="w-20 rounded-lg border border-slate-200 px-3 py-2 text-sm" />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-500">Subject</label>
+                <label className="mb-1 block text-xs font-medium text-slate-500">{t.common.subject}</label>
                 <select name="subject_id" className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
                   <option value="">—</option>
                   {subjectList.map((s) => (
@@ -160,26 +164,26 @@ export default async function TimetablePage({
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-500">Teacher</label>
+                <label className="mb-1 block text-xs font-medium text-slate-500">{t.common.teacher}</label>
                 <select name="teacher_id" className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
                   <option value="">—</option>
-                  {teacherList.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.full_name}
+                  {teacherList.map((teacher) => (
+                    <option key={teacher.id} value={teacher.id}>
+                      {teacher.full_name}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-500">Start</label>
+                <label className="mb-1 block text-xs font-medium text-slate-500">{t.timetable.start}</label>
                 <input type="time" name="start_time" className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-500">End</label>
+                <label className="mb-1 block text-xs font-medium text-slate-500">{t.timetable.end}</label>
                 <input type="time" name="end_time" className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
               </div>
               <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                Add slot
+                {t.timetable.addSlot}
               </button>
             </form>
           </div>
