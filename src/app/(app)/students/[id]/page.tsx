@@ -23,6 +23,8 @@ import {
   YearlyReportTab,
 } from "./tabs";
 import type { ClassRow, Student } from "@/lib/types";
+import { getDictionary, type Dictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 const TABS = [
   "overview",
@@ -39,19 +41,21 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number];
 
-const TAB_LABELS: Record<Tab, string> = {
-  overview: "Overview",
-  profile: "Profile",
-  attendance: "Attendance",
-  exams: "Exams",
-  results: "Results",
-  assignments: "Assignments",
-  fees: "Fees",
-  behavior: "Behavior",
-  remarks: "Teacher Remarks",
-  documents: "Documents",
-  "yearly-report": "Yearly Report",
-};
+function tabLabels(t: Dictionary): Record<Tab, string> {
+  return {
+    overview: t.students.overview,
+    profile: t.students.profile,
+    attendance: t.students.attendance,
+    exams: t.students.exams,
+    results: t.students.results,
+    assignments: t.students.assignments,
+    fees: t.students.fees,
+    behavior: t.students.behavior,
+    remarks: t.students.teacherRemarks,
+    documents: t.students.documents,
+    "yearly-report": t.students.yearlyReport,
+  };
+}
 
 export default async function StudentProfilePage({
   params,
@@ -60,6 +64,7 @@ export default async function StudentProfilePage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ tab?: string }>;
 }) {
+  const t = getDictionary(await getLocale());
   const { id } = await params;
   const { tab: tabParam } = await searchParams;
   const tab: Tab = (TABS as readonly string[]).includes(tabParam ?? "") ? (tabParam as Tab) : "overview";
@@ -84,10 +89,10 @@ export default async function StudentProfilePage({
     <div className="space-y-6">
       <Breadcrumb
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Classes", href: "/classes" },
+          { label: t.nav.dashboard, href: "/dashboard" },
+          { label: t.nav.classes, href: "/classes" },
           ...(cls ? [{ label: cls.class_name, href: `/classes/${cls.id}` }] : []),
-          { label: "Students", href: "/students" },
+          { label: t.nav.students, href: "/students" },
           { label: student.full_name },
         ]}
       />
@@ -100,17 +105,17 @@ export default async function StudentProfilePage({
           <div>
             <h1 className="text-xl font-semibold text-slate-900">{student.full_name}</h1>
             <p className="text-sm text-slate-400">
-              Roll No: {student.roll_no ?? "—"} · {cls?.class_name ?? "Unassigned"} · {student.student_id}
+              {t.students.rollNo}: {student.roll_no ?? "—"} · {cls?.class_name ?? t.common.unassigned} · {student.student_id}
             </p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge tone={student.status}>{student.status === "active" ? "Active Student" : "Inactive"}</Badge>
+          <Badge tone={student.status}>{student.status === "active" ? t.students.activeStudent : t.students.inactiveStudent}</Badge>
           <Link
             href={`/students/${id}/edit`}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
-            <Pencil size={14} /> Edit Profile
+            <Pencil size={14} /> {t.students.editProfile}
           </Link>
           <PromoteStudent
             studentId={id}
@@ -123,58 +128,58 @@ export default async function StudentProfilePage({
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <StatCard label="Attendance" value={`${summary.attendancePct}%`} />
-        <StatCard label="Academic Average" value={`${summary.academicAveragePct}%`} />
-        <StatCard label="Class Position" value={summary.classPosition ? `#${summary.classPosition}` : "—"} />
-        <StatCard label="Total Exams" value={summary.totalExams} />
-        <StatCard label="Overall Grade" value={summary.grade} />
-        <StatCard label="Class Size" value={summary.classSize} />
+        <StatCard label={t.students.attendance} value={`${summary.attendancePct}%`} />
+        <StatCard label={t.students.academicAverage} value={`${summary.academicAveragePct}%`} />
+        <StatCard label={t.students.classPosition} value={summary.classPosition ? `#${summary.classPosition}` : "—"} />
+        <StatCard label={t.students.totalExams} value={summary.totalExams} />
+        <StatCard label={t.students.overallGrade} value={summary.grade} />
+        <StatCard label={t.studentTabs.classSize} value={summary.classSize} />
       </div>
 
       <div className="border-b border-slate-200">
         <nav className="flex flex-wrap gap-1 overflow-x-auto">
-          {TABS.map((t) => (
+          {TABS.map((tabKey) => (
             <Link
-              key={t}
-              href={`/students/${id}?tab=${t}`}
+              key={tabKey}
+              href={`/students/${id}?tab=${tabKey}`}
               className={`whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium ${
-                tab === t ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-800"
+                tab === tabKey ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-800"
               }`}
             >
-              {TAB_LABELS[t]}
+              {tabLabels(t)[tabKey]}
             </Link>
           ))}
         </nav>
       </div>
 
-      <TabContent tab={tab} student={student as Student} cls={cls as ClassRow | null} />
+      <TabContent tab={tab} student={student as Student} cls={cls as ClassRow | null} t={t} />
     </div>
   );
 }
 
-function TabContent({ tab, student, cls }: { tab: Tab; student: Student; cls: ClassRow | null }) {
+function TabContent({ tab, student, cls, t }: { tab: Tab; student: Student; cls: ClassRow | null; t: Dictionary }) {
   switch (tab) {
     case "overview":
-      return <OverviewTab student={student} cls={cls} />;
+      return <OverviewTab student={student} cls={cls} t={t} />;
     case "profile":
-      return <ProfileTab student={student} />;
+      return <ProfileTab student={student} t={t} />;
     case "attendance":
-      return <AttendanceTab studentId={student.id} />;
+      return <AttendanceTab studentId={student.id} t={t} />;
     case "exams":
-      return <ExamsTab classId={student.class_id} />;
+      return <ExamsTab classId={student.class_id} t={t} />;
     case "results":
-      return <ResultsTab studentId={student.id} />;
+      return <ResultsTab studentId={student.id} t={t} />;
     case "assignments":
-      return <AssignmentsTab classId={student.class_id} />;
+      return <AssignmentsTab classId={student.class_id} t={t} />;
     case "fees":
-      return <FeesTab studentId={student.id} />;
+      return <FeesTab studentId={student.id} t={t} />;
     case "behavior":
-      return <BehaviorTab studentId={student.id} />;
+      return <BehaviorTab studentId={student.id} t={t} />;
     case "remarks":
-      return <RemarksTab studentId={student.id} />;
+      return <RemarksTab studentId={student.id} t={t} />;
     case "documents":
-      return <DocumentsTab studentId={student.id} />;
+      return <DocumentsTab studentId={student.id} t={t} />;
     case "yearly-report":
-      return <YearlyReportTab student={student} />;
+      return <YearlyReportTab student={student} t={t} />;
   }
 }

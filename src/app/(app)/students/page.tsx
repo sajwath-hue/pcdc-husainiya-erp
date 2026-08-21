@@ -8,12 +8,15 @@ import { Badge } from "@/components/ui/Badge";
 import { initials } from "@/lib/utils";
 import { ImportStudents } from "./ImportStudents";
 import type { ClassRow, Student } from "@/lib/types";
+import { format, getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 export default async function StudentsPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; class?: string; status?: string }>;
 }) {
+  const t = getDictionary(await getLocale());
   const { q, class: classFilter, status } = await searchParams;
   const supabase = await createClient();
   const { years, selected } = await getAcademicYearContext();
@@ -43,35 +46,35 @@ export default async function StudentsPage({
     <div className="space-y-6">
       <Breadcrumb
         items={[
-          { label: "Dashboard", href: "/dashboard" },
+          { label: t.nav.dashboard, href: "/dashboard" },
           ...(currentClass
-            ? [{ label: "Classes", href: "/classes" }, { label: currentClass.class_name, href: `/classes/${currentClass.id}` }]
+            ? [{ label: t.nav.classes, href: "/classes" }, { label: currentClass.class_name, href: `/classes/${currentClass.id}` }]
             : []),
-          { label: "Students" },
+          { label: t.nav.students },
         ]}
       />
       <PageHeader
-        title={currentClass ? `${currentClass.class_name} Students` : "Students"}
-        description="Profiles, guardians and academic-year enrollment history."
+        title={currentClass ? format(t.students.listTitle, { className: currentClass.class_name }) : t.students.title}
+        description={t.students.subtitle}
         action={
           <div className="flex flex-wrap gap-2">
             <Link
               href="/students/csv-template"
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              <FileSpreadsheet size={15} /> CSV Template
+              <FileSpreadsheet size={15} /> {t.classes.csvTemplate}
             </Link>
             <Link
               href="/students/export"
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              <Download size={15} /> Export Students
+              <Download size={15} /> {t.common.export} {t.nav.students}
             </Link>
             <Link
               href="/students/new"
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
             >
-              <Plus size={16} /> Add Student
+              <Plus size={16} /> {t.students.addStudent}
             </Link>
           </div>
         }
@@ -85,7 +88,7 @@ export default async function StudentsPage({
           type="search"
           name="q"
           defaultValue={q}
-          placeholder="Search student, ID, roll, admission or guardian..."
+          placeholder={t.students.searchPlaceholder}
           className="w-full max-w-md rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
         />
         <select
@@ -93,22 +96,22 @@ export default async function StudentsPage({
           defaultValue={status ?? ""}
           className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm"
         >
-          <option value="">All statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
+          <option value="">{t.common.allStatuses}</option>
+          <option value="active">{t.common.active}</option>
+          <option value="inactive">{t.common.inactive}</option>
         </select>
       </form>
 
       {list.length === 0 ? (
         <EmptyState
-          title="No students found"
-          description="Add a student manually or import a class list from CSV."
+          title={t.students.noStudentsFound}
+          description={t.students.noStudentsFoundBody}
           action={
             <Link
               href="/students/new"
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
             >
-              <Plus size={16} /> Add Student
+              <Plus size={16} /> {t.students.addStudent}
             </Link>
           }
         />
@@ -128,45 +131,45 @@ export default async function StudentsPage({
                       <div>
                         <p className="font-semibold text-slate-800">{s.full_name}</p>
                         <p className="text-xs text-slate-400">
-                          Roll {s.roll_no ?? "—"} · {s.student_id}
+                          {format(t.students.rollNumber, { no: s.roll_no ?? "—" })} · {s.student_id}
                         </p>
                       </div>
                     </div>
-                    <Badge tone={s.status}>{s.status}</Badge>
+                    <Badge tone={s.status}>{s.status === "active" ? t.common.active : t.common.inactive}</Badge>
                   </div>
 
                   <div className="mb-4 grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <p className="font-medium text-slate-400">CLASS</p>
-                      <p className="mt-0.5 text-slate-700">{cls?.class_name ?? "Unassigned"}</p>
+                      <p className="font-medium uppercase text-slate-400">{t.common.class}</p>
+                      <p className="mt-0.5 text-slate-700">{cls?.class_name ?? t.common.unassigned}</p>
                     </div>
                     <div>
-                      <p className="font-medium text-slate-400">ATTENDANCE</p>
+                      <p className="font-medium uppercase text-slate-400">{t.students.attendance}</p>
                       <p className="mt-0.5 text-slate-700">{stat?.attendancePct ?? 0}%</p>
                     </div>
                     <div>
-                      <p className="font-medium text-slate-400">ACADEMIC AVERAGE</p>
+                      <p className="font-medium uppercase text-slate-400">{t.students.academicAverage}</p>
                       <p className="mt-0.5 text-slate-700">{stat?.academicAveragePct ?? 0}%</p>
                     </div>
                     <div>
-                      <p className="font-medium text-slate-400">GRADE</p>
+                      <p className="font-medium uppercase text-slate-400">{t.students.grade}</p>
                       <p className="mt-0.5 text-slate-700">{stat?.grade ?? "—"}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <Link href={`/students/${s.id}`} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                      View Full Profile
+                      {t.students.viewFullProfile}
                     </Link>
                     <Link href={`/students/${s.id}/edit`} className="text-xs font-medium text-blue-600 hover:underline">
-                      Edit
+                      {t.common.edit}
                     </Link>
                   </div>
                 </div>
               );
             })}
           </div>
-          <p className="text-sm text-slate-500">Showing 1-{list.length} of {list.length} students</p>
+          <p className="text-sm text-slate-500">{format(t.students.showingStudents, { from: 1, to: list.length, total: list.length })}</p>
         </>
       )}
     </div>
