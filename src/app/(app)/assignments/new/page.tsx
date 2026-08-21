@@ -3,8 +3,11 @@ import { getAcademicYearContext } from "@/lib/data/academic-year";
 import { Breadcrumb, PageHeader } from "@/components/ui/PageHeader";
 import { AssignmentForm } from "../AssignmentForm";
 import type { ClassRow, Subject, Teacher } from "@/lib/types";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 export default async function NewAssignmentPage() {
+  const t = getDictionary(await getLocale());
   const supabase = await createClient();
   const { selected } = await getAcademicYearContext();
   const [{ data: classes }, { data: subjects }, { data: teachers }] = await Promise.all([
@@ -17,12 +20,12 @@ export default async function NewAssignmentPage() {
     <div className="space-y-6">
       <Breadcrumb
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Assignments", href: "/assignments" },
-          { label: "New" },
+          { label: t.nav.dashboard, href: "/dashboard" },
+          { label: t.nav.assignments, href: "/assignments" },
+          { label: t.common.new },
         ]}
       />
-      <PageHeader title="Add Assignment" description="Assign classwork to a class." />
+      <PageHeader title={t.assignments.newTitle} description={t.assignments.newSubtitle} />
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <AssignmentForm
           classes={(classes ?? []) as ClassRow[]}
