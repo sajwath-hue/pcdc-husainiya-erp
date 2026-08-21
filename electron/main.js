@@ -92,7 +92,15 @@ function startStandaloneServer() {
   log(`Starting server: ${process.execPath} ${serverEntry}`);
 
   serverProcess = spawn(process.execPath, [serverEntry], {
-    env: { ...process.env, PORT: String(PROD_PORT), HOSTNAME: "127.0.0.1" },
+    // Without this, running the Electron binary itself as the "node" here
+    // makes it try to boot as an Electron app instead of executing
+    // server.js as a plain script — the server then never binds its port.
+    env: {
+      ...process.env,
+      ELECTRON_RUN_AS_NODE: "1",
+      PORT: String(PROD_PORT),
+      HOSTNAME: "127.0.0.1",
+    },
     stdio: ["ignore", "pipe", "pipe"],
   });
 
