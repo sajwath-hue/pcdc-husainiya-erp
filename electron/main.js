@@ -61,23 +61,29 @@ function waitForServer(url, timeoutMs = 30000) {
 
 function ensureServerExtracted() {
   // Shipped as resources/standalone.tar.gz (see electron/prepare-standalone.js
-  // for why it's an archive rather than a plain folder). Extract once into
-  // userData, which is writable even when the app itself is installed
-  // read-only (e.g. Program Files on Windows).
+  // for why it's an archive rather than a plain folder). userData is
+  // writable even when the app itself is installed read-only (e.g. Program
+  // Files on Windows).
+  //
+  // Re-extract on every launch rather than reusing a previous extraction:
+  // userData persists across app upgrades (it's keyed by app name, not
+  // version), so a stale extraction from an older install would otherwise
+  // silently keep being used forever — exactly the kind of bug that made a
+  // previously-shipped fix look like it "didn't work" on a machine that had
+  // already run an older build once.
   const extractDir = path.join(app.getPath("userData"), "standalone");
   const serverEntry = path.join(extractDir, "standalone", "server.js");
 
-  if (!fs.existsSync(serverEntry)) {
-    const archivePath = path.join(process.resourcesPath, "standalone.tar.gz");
-    log(`Extracting ${archivePath} to ${extractDir}`);
-    fs.mkdirSync(extractDir, { recursive: true });
-    try {
-      execFileSync("tar", ["-xzf", archivePath, "-C", extractDir], { stdio: "pipe" });
-    } catch (err) {
-      throw new Error(
-        `Failed to extract app files (tar -xzf failed): ${err.message}\n${err.stderr ? err.stderr.toString() : ""}`,
-      );
-    }
+  const archivePath = path.join(process.resourcesPath, "standalone.tar.gz");
+  log(`Extracting ${archivePath} to ${extractDir}`);
+  fs.rmSync(extractDir, { recursive: true, force: true });
+  fs.mkdirSync(extractDir, { recursive: true });
+  try {
+    execFileSync("tar", ["-xzf", archivePath, "-C", extractDir], { stdio: "pipe" });
+  } catch (err) {
+    throw new Error(
+      `Failed to extract app files (tar -xzf failed): ${err.message}\n${err.stderr ? err.stderr.toString() : ""}`,
+    );
   }
 
   if (!fs.existsSync(serverEntry)) {
