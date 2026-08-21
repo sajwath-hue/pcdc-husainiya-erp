@@ -5,6 +5,8 @@ import { saveMarksAction, type MarksState } from "../../actions";
 import { SubmitButton } from "@/components/ui/Form";
 import { initials } from "@/lib/utils";
 import type { Student } from "@/lib/types";
+import { format } from "@/lib/i18n";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 const initialState: MarksState = { error: null, success: false };
 
@@ -20,6 +22,7 @@ export function MarksForm({
   existing: Map<string, number>;
 }) {
   const [state, formAction] = useActionState(saveMarksAction, initialState);
+  const t = useDictionary();
 
   return (
     <form action={formAction} className="space-y-4">
@@ -29,9 +32,9 @@ export function MarksForm({
         <table className="w-full text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-4 py-3">Student</th>
-              <th className="px-4 py-3">Roll</th>
-              <th className="px-4 py-3">Marks obtained (of {totalMarks})</th>
+              <th className="px-4 py-3">{t.common.student}</th>
+              <th className="px-4 py-3">{t.attendance.rollNo}</th>
+              <th className="px-4 py-3">{format(t.exams.marksObtainedOf, { total: totalMarks })}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -65,8 +68,8 @@ export function MarksForm({
       </div>
 
       <div className="flex items-center gap-3">
-        <SubmitButton>Save marks</SubmitButton>
-        {state.success && <span className="text-sm font-medium text-emerald-600">Marks saved.</span>}
+        <SubmitButton>{t.exams.saveMarks}</SubmitButton>
+        {state.success && <span className="text-sm font-medium text-emerald-600">{t.exams.marksSaved}</span>}
         {state.error && <span className="text-sm font-medium text-red-600">{state.error}</span>}
       </div>
     </form>

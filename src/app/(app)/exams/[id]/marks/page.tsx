@@ -3,8 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { Breadcrumb, PageHeader, EmptyState } from "@/components/ui/PageHeader";
 import { MarksForm } from "./MarksForm";
 import type { Student } from "@/lib/types";
+import { format, getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 export default async function EnterMarksPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = getDictionary(await getLocale());
   const { id } = await params;
   const supabase = await createClient();
 
@@ -24,18 +27,22 @@ export default async function EnterMarksPage({ params }: { params: Promise<{ id:
     <div className="space-y-6">
       <Breadcrumb
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Exams & Results", href: "/exams" },
-          { label: `${exam.name} — Marks` },
+          { label: t.nav.dashboard, href: "/dashboard" },
+          { label: t.nav.examsResults, href: "/exams" },
+          { label: format(t.exams.marksBreadcrumb, { name: exam.name }) },
         ]}
       />
       <PageHeader
-        title={`${exam.name} — Enter Marks`}
-        description={`${classInfo?.class_name ?? ""} · ${subjectInfo?.name ?? ""} · Total ${exam.total_marks} marks`}
+        title={format(t.exams.enterMarksTitle, { name: exam.name })}
+        description={format(t.exams.enterMarksDescription, {
+          class: classInfo?.class_name ?? "",
+          subject: subjectInfo?.name ?? "",
+          total: exam.total_marks,
+        })}
       />
 
       {list.length === 0 ? (
-        <EmptyState title="No students in this class yet" />
+        <EmptyState title={t.exams.noStudentsInClassYet} />
       ) : (
         <MarksForm examId={id} totalMarks={exam.total_marks} students={list} existing={existing} />
       )}

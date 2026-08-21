@@ -4,8 +4,11 @@ import { getAcademicYearContext } from "@/lib/data/academic-year";
 import { Breadcrumb, PageHeader } from "@/components/ui/PageHeader";
 import { ExamForm } from "../../ExamForm";
 import type { ClassRow, Subject } from "@/lib/types";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 export default async function EditExamPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = getDictionary(await getLocale());
   const { id } = await params;
   const supabase = await createClient();
   const { data: exam } = await supabase.from("exams").select("*").eq("id", id).maybeSingle();
@@ -21,12 +24,12 @@ export default async function EditExamPage({ params }: { params: Promise<{ id: s
     <div className="space-y-6">
       <Breadcrumb
         items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Exams & Results", href: "/exams" },
-          { label: "Edit" },
+          { label: t.nav.dashboard, href: "/dashboard" },
+          { label: t.nav.examsResults, href: "/exams" },
+          { label: t.common.edit },
         ]}
       />
-      <PageHeader title={`Edit ${exam.name}`} />
+      <PageHeader title={`${t.common.edit} ${exam.name}`} />
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <ExamForm years={years} classes={(classes ?? []) as ClassRow[]} subjects={(subjects ?? []) as Subject[]} exam={exam} />
       </div>

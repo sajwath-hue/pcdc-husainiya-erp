@@ -4,13 +4,16 @@ import { Breadcrumb, PageHeader, EmptyState } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { FeeDonut } from "@/components/dashboard/FeeDonut";
 import { formatPKR } from "@/lib/utils";
+import { format, getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 export default async function FinancialManagementPage() {
+  const t = getDictionary(await getLocale());
   const supabase = await createClient();
   const { selected } = await getAcademicYearContext();
 
   if (!selected) {
-    return <EmptyState title="No academic year selected" description="Create an academic year to see financial reports." />;
+    return <EmptyState title={t.financial.noAcademicYearSelected} description={t.financial.noAcademicYearSelectedBody} />;
   }
 
   const { data: fees } = await supabase
@@ -34,7 +37,7 @@ export default async function FinancialManagementPage() {
 
   const byClass = new Map<string, { billed: number; collected: number }>();
   for (const f of rows) {
-    const name = f.students?.classes?.class_name ?? "Unassigned";
+    const name = f.students?.classes?.class_name ?? t.common.unassigned;
     const bucket = byClass.get(name) ?? { billed: 0, collected: 0 };
     bucket.billed += Number(f.amount);
     bucket.collected += Number(f.amount_paid);
@@ -48,26 +51,26 @@ export default async function FinancialManagementPage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Financial Management" }]} />
-      <PageHeader title="Financial Management" description={`Academic-year payment position for ${selected.year_label}.`} />
+      <Breadcrumb items={[{ label: t.nav.dashboard, href: "/dashboard" }, { label: t.nav.financialManagement }]} />
+      <PageHeader title={t.financial.title} description={format(t.financial.subtitleForYear, { year: selected.year_label })} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total Billed" value={formatPKR(totalBilled)} />
-        <StatCard label="Collected" value={formatPKR(totalCollected)} accent="bg-emerald-50 text-emerald-600" />
-        <StatCard label="Pending" value={formatPKR(totalPending)} accent="bg-amber-50 text-amber-600" />
-        <StatCard label="Overdue" value={formatPKR(totalOverdue)} accent="bg-red-50 text-red-600" />
+        <StatCard label={t.fees.totalBilled} value={formatPKR(totalBilled)} />
+        <StatCard label={t.dashboard.collected} value={formatPKR(totalCollected)} accent="bg-emerald-50 text-emerald-600" />
+        <StatCard label={t.dashboard.pending} value={formatPKR(totalPending)} accent="bg-amber-50 text-amber-600" />
+        <StatCard label={t.dashboard.overdue} value={formatPKR(totalOverdue)} accent="bg-red-50 text-red-600" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-sm font-semibold text-slate-800">Collection Overview</h2>
+          <h2 className="mb-4 text-sm font-semibold text-slate-800">{t.financial.collectionOverview}</h2>
           <FeeDonut collected={totalCollected} pending={Math.max(totalBilled - totalCollected, 0)} />
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-sm font-semibold text-slate-800">Billed by Fee Type</h2>
+          <h2 className="mb-4 text-sm font-semibold text-slate-800">{t.financial.billedByFeeType}</h2>
           {byType.size === 0 ? (
-            <p className="text-sm text-slate-400">No fee records yet.</p>
+            <p className="text-sm text-slate-400">{t.studentTabs.noFeeRecords}</p>
           ) : (
             <div className="space-y-3">
               {Array.from(byType.entries()).map(([type, amount]) => (
@@ -82,17 +85,17 @@ export default async function FinancialManagementPage() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <h2 className="px-5 pt-5 text-sm font-semibold text-slate-800">By Class</h2>
+        <h2 className="px-5 pt-5 text-sm font-semibold text-slate-800">{t.financial.byClass}</h2>
         {byClass.size === 0 ? (
-          <p className="px-5 py-6 text-sm text-slate-400">No fee records yet.</p>
+          <p className="px-5 py-6 text-sm text-slate-400">{t.studentTabs.noFeeRecords}</p>
         ) : (
           <table className="mt-3 w-full text-left text-sm">
             <thead className="border-y border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-5 py-3">Class</th>
-                <th className="px-5 py-3">Billed</th>
-                <th className="px-5 py-3">Collected</th>
-                <th className="px-5 py-3">Outstanding</th>
+                <th className="px-5 py-3">{t.common.class}</th>
+                <th className="px-5 py-3">{t.financial.billed}</th>
+                <th className="px-5 py-3">{t.dashboard.collected}</th>
+                <th className="px-5 py-3">{t.fees.outstanding}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

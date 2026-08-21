@@ -9,12 +9,15 @@ import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { formatDate, formatPKR } from "@/lib/utils";
 import { RecordPayment } from "./RecordPayment";
 import { deleteFeeAction } from "./actions";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 export default async function FeesPage({
   searchParams,
 }: {
   searchParams: Promise<{ class?: string; status?: string }>;
 }) {
+  const t = getDictionary(await getLocale());
   const { class: classFilter, status } = await searchParams;
   const supabase = await createClient();
   const { selected } = await getAcademicYearContext();
@@ -45,54 +48,54 @@ export default async function FeesPage({
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Fees" }]} />
+      <Breadcrumb items={[{ label: t.nav.dashboard, href: "/dashboard" }, { label: t.nav.fees }]} />
       <PageHeader
-        title="Fees"
-        description="Track tuition and other fee payments by student."
+        title={t.fees.title}
+        description={t.fees.subtitle}
         action={
           <Link
             href="/fees/new"
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
           >
-            <Plus size={16} /> Add Fee Record
+            <Plus size={16} /> {t.fees.newTitle}
           </Link>
         }
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Total Billed" value={formatPKR(totalExpected)} />
-        <StatCard label="Collected" value={formatPKR(totalCollected)} accent="bg-emerald-50 text-emerald-600" />
-        <StatCard label="Outstanding" value={formatPKR(totalPending)} accent="bg-amber-50 text-amber-600" />
+        <StatCard label={t.fees.totalBilled} value={formatPKR(totalExpected)} />
+        <StatCard label={t.dashboard.collected} value={formatPKR(totalCollected)} accent="bg-emerald-50 text-emerald-600" />
+        <StatCard label={t.fees.outstanding} value={formatPKR(totalPending)} accent="bg-amber-50 text-amber-600" />
       </div>
 
       <form className="flex gap-3">
         {classFilter && <input type="hidden" name="class" value={classFilter} />}
         <select name="status" defaultValue={status ?? ""} className="rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm">
-          <option value="">All statuses</option>
-          <option value="paid">Paid</option>
-          <option value="pending">Pending</option>
-          <option value="overdue">Overdue</option>
+          <option value="">{t.common.allStatuses}</option>
+          <option value="paid">{t.fees.paid}</option>
+          <option value="pending">{t.dashboard.pending}</option>
+          <option value="overdue">{t.dashboard.overdue}</option>
         </select>
         <button type="submit" className="rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
-          Filter
+          {t.common.filter}
         </button>
       </form>
 
       {list.length === 0 ? (
-        <EmptyState title="No fee records" description="Add a fee record for a student to start tracking payments." />
+        <EmptyState title={t.fees.noFeeRecordsTitle} description={t.fees.noFeeRecordsBody} />
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-4 py-3">Student</th>
-                <th className="px-4 py-3">Class</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Paid</th>
-                <th className="px-4 py-3">Due Date</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className="px-4 py-3">{t.common.student}</th>
+                <th className="px-4 py-3">{t.common.class}</th>
+                <th className="px-4 py-3">{t.studentTabs.typeCol}</th>
+                <th className="px-4 py-3">{t.common.amount}</th>
+                <th className="px-4 py-3">{t.fees.paid}</th>
+                <th className="px-4 py-3">{t.common.dueDate}</th>
+                <th className="px-4 py-3">{t.common.status}</th>
+                <th className="px-4 py-3 text-right">{t.common.actions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -105,7 +108,7 @@ export default async function FeesPage({
                   <td className="px-4 py-3">{formatPKR(f.amount_paid)}</td>
                   <td className="px-4 py-3">{formatDate(f.due_date)}</td>
                   <td className="px-4 py-3">
-                    <Badge tone={f.status}>{f.status}</Badge>
+                    <Badge tone={f.status}>{f.status === "paid" ? t.fees.paid : f.status === "pending" ? t.dashboard.pending : t.dashboard.overdue}</Badge>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
@@ -113,7 +116,7 @@ export default async function FeesPage({
                       <form action={deleteFeeAction}>
                         <input type="hidden" name="id" value={f.id} />
                         <ConfirmButton
-                          message="Delete this fee record?"
+                          message={t.fees.confirmDeleteFeeRecord}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg hover:bg-red-50"
                         >
                           <Trash2 size={15} />

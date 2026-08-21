@@ -6,12 +6,15 @@ import { Breadcrumb, PageHeader, EmptyState } from "@/components/ui/PageHeader";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { formatDate } from "@/lib/utils";
 import { deleteExamAction } from "./actions";
+import { format, getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 export default async function ExamsPage({
   searchParams,
 }: {
   searchParams: Promise<{ class?: string }>;
 }) {
+  const t = getDictionary(await getLocale());
   const { class: classFilter } = await searchParams;
   const supabase = await createClient();
   const { selected } = await getAcademicYearContext();
@@ -45,35 +48,35 @@ export default async function ExamsPage({
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Exams & Results" }]} />
+      <Breadcrumb items={[{ label: t.nav.dashboard, href: "/dashboard" }, { label: t.nav.examsResults }]} />
       <PageHeader
-        title="Exams & Results"
-        description="Create exams, enter marks and review class performance."
+        title={t.exams.title}
+        description={t.exams.subtitle}
         action={
           <Link
             href="/exams/new"
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
           >
-            <Plus size={16} /> Add Exam
+            <Plus size={16} /> {t.exams.addExam}
           </Link>
         }
       />
 
       {list.length === 0 ? (
-        <EmptyState title="No exams yet" description="Create your first exam to start recording results." />
+        <EmptyState title={t.exams.noExamsYet} description={t.exams.noExamsYetBody} />
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-4 py-3">Exam</th>
-                <th className="px-4 py-3">Class</th>
-                <th className="px-4 py-3">Subject</th>
-                <th className="px-4 py-3">Term</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Total</th>
-                <th className="px-4 py-3">Results</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className="px-4 py-3">{t.exams.examName}</th>
+                <th className="px-4 py-3">{t.common.class}</th>
+                <th className="px-4 py-3">{t.common.subject}</th>
+                <th className="px-4 py-3">{t.exams.term}</th>
+                <th className="px-4 py-3">{t.common.date}</th>
+                <th className="px-4 py-3">{t.common.total}</th>
+                <th className="px-4 py-3">{t.exams.resultsCol}</th>
+                <th className="px-4 py-3 text-right">{t.common.actions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -90,14 +93,14 @@ export default async function ExamsPage({
                     <div className="flex items-center justify-end gap-1">
                       <Link
                         href={`/exams/${e.id}/marks`}
-                        title="Enter marks"
+                        title={t.exams.enterMarksTooltip}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-blue-600"
                       >
                         <ClipboardEdit size={15} />
                       </Link>
                       <Link
                         href={`/exams/${e.id}/edit`}
-                        title="Edit"
+                        title={t.common.edit}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                       >
                         <Pencil size={15} />
@@ -105,7 +108,7 @@ export default async function ExamsPage({
                       <form action={deleteExamAction}>
                         <input type="hidden" name="id" value={e.id} />
                         <ConfirmButton
-                          message={`Delete exam "${e.name}"? All recorded results will be removed too.`}
+                          message={format(t.exams.confirmDeleteExam, { name: e.name })}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg hover:bg-red-50"
                         >
                           <Trash2 size={15} />
