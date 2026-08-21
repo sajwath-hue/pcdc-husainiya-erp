@@ -49,6 +49,7 @@ const fa: typeof en = {
     unassigned: "تخصیص‌نیافته",
     selectYear: "انتخاب سال",
     dashboard: "داشبورد",
+    new: "جدید",
   },
   nav: {
     workspace: "فضای کاری",

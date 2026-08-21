@@ -47,6 +47,7 @@ const en: Record<string, Record<string, string>> = {
     unassigned: "Unassigned",
     selectYear: "Select year",
     dashboard: "Dashboard",
+    new: "New",
   },
   nav: {
     workspace: "WORKSPACE",

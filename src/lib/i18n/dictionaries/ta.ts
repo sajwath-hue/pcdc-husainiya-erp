@@ -49,6 +49,7 @@ const ta: typeof en = {
     unassigned: "ஒதுக்கப்படவில்லை",
     selectYear: "ஆண்டைத் தேர்ந்தெடு",
     dashboard: "டாஷ்போர்டு",
+    new: "புதியது",
   },
   nav: {
     workspace: "பணியிடம்",
