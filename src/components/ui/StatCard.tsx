@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 export function StatCard({
   label,
   value,
-  hint = "Live database total",
+  hint,
   icon: Icon,
   accent = "bg-blue-50 text-blue-500",
 }: {
@@ -25,7 +25,7 @@ export function StatCard({
         )}
       </div>
       <p className="mt-3 text-2xl font-semibold text-slate-900">{value}</p>
-      <p className="mt-1 text-xs font-medium text-emerald-600">{hint}</p>
+      {hint && <p className="mt-1 text-xs font-medium text-emerald-600">{hint}</p>}
     </div>
   );
 }

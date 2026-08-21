@@ -2,6 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 import { cn } from "@/lib/utils";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 export function Field({
   label,
@@ -56,6 +57,7 @@ export function SubmitButton({
   className?: string;
 }) {
   const { pending } = useFormStatus();
+  const t = useDictionary();
   return (
     <button
       type="submit"
@@ -65,7 +67,7 @@ export function SubmitButton({
         className
       )}
     >
-      {pending ? "Saving..." : children}
+      {pending ? t.common.loading : children}
     </button>
   );
 }

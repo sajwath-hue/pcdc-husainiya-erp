@@ -1,8 +1,10 @@
 "use client";
 
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 export function AttendanceTrendChart({ data }: { data: { label: string; pct: number }[] }) {
+  const t = useDictionary();
   return (
     <div className="h-48 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -16,7 +18,7 @@ export function AttendanceTrendChart({ data }: { data: { label: string; pct: num
             tickFormatter={(v) => `${v}%`}
           />
           <Tooltip
-            formatter={(value) => [`${value}%`, "Attendance"]}
+            formatter={(value) => [`${value}%`, t.students.attendance]}
             contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
           />
           <Bar dataKey="pct" fill="#2563eb" radius={[6, 6, 0, 0]} maxBarSize={28} />
