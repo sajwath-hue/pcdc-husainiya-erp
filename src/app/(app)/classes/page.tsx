@@ -7,8 +7,11 @@ import { Badge } from "@/components/ui/Badge";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { deleteClassAction, toggleClassStatusAction } from "./actions";
 import type { ClassRow } from "@/lib/types";
+import { format, getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 export default async function ClassesPage() {
+  const t = getDictionary(await getLocale());
   const supabase = await createClient();
   const { years, selected } = await getAcademicYearContext();
 
@@ -33,30 +36,30 @@ export default async function ClassesPage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Classes" }]} />
+      <Breadcrumb items={[{ label: t.nav.dashboard, href: "/dashboard" }, { label: t.nav.classes }]} />
       <PageHeader
-        title="Classes"
-        description="Sections, rooms, capacity and teacher assignments."
+        title={t.classes.title}
+        description={t.classes.subtitle}
         action={
           <Link
             href="/classes/new"
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
           >
-            <Plus size={16} /> Add Class
+            <Plus size={16} /> {t.classes.addClass}
           </Link>
         }
       />
 
       {list.length === 0 ? (
         <EmptyState
-          title="No classes yet"
-          description="Add your first class to start enrolling students and assigning teachers."
+          title={t.classes.noClassesYet}
+          description={t.classes.noClassesYetBody}
           action={
             <Link
               href="/classes/new"
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
             >
-              <Plus size={16} /> Add Class
+              <Plus size={16} /> {t.classes.addClass}
             </Link>
           }
         />
@@ -65,12 +68,12 @@ export default async function ClassesPage() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-4 py-3 font-medium">Class & Section</th>
-                <th className="px-4 py-3 font-medium">Academic Year</th>
-                <th className="px-4 py-3 font-medium">Students / Capacity</th>
-                <th className="px-4 py-3 font-medium">Teachers</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium text-right">Actions</th>
+                <th className="px-4 py-3 font-medium">{t.classes.classSection}</th>
+                <th className="px-4 py-3 font-medium">{t.classHub.academicYear}</th>
+                <th className="px-4 py-3 font-medium">{t.classes.studentsCapacity}</th>
+                <th className="px-4 py-3 font-medium">{t.classes.teachersCount}</th>
+                <th className="px-4 py-3 font-medium">{t.common.status}</th>
+                <th className="px-4 py-3 font-medium text-right">{t.common.actions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -87,7 +90,7 @@ export default async function ClassesPage() {
                           <Link href={`/classes/${c.id}`} className="font-semibold text-slate-800 hover:text-blue-600">
                             {c.class_name}
                           </Link>
-                          <p className="text-xs text-slate-400">Room {c.room || "—"}</p>
+                          <p className="text-xs text-slate-400">{t.classHub.room} {c.room || "—"}</p>
                         </div>
                       </div>
                     </td>
@@ -101,7 +104,7 @@ export default async function ClassesPage() {
                         <input type="hidden" name="id" value={c.id} />
                         <input type="hidden" name="status" value={c.status} />
                         <button type="submit">
-                          <Badge tone={c.status}>{c.status}</Badge>
+                          <Badge tone={c.status}>{c.status === "active" ? t.common.active : t.common.inactive}</Badge>
                         </button>
                       </form>
                     </td>
@@ -109,14 +112,14 @@ export default async function ClassesPage() {
                       <div className="flex items-center justify-end gap-1">
                         <Link
                           href={`/classes/${c.id}`}
-                          title="Open"
+                          title={t.classes.openAction}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                         >
                           <ExternalLink size={15} />
                         </Link>
                         <Link
                           href={`/classes/${c.id}/edit`}
-                          title="Edit"
+                          title={t.common.edit}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                         >
                           <Pencil size={15} />
@@ -125,8 +128,8 @@ export default async function ClassesPage() {
                           <form action={deleteClassAction}>
                             <input type="hidden" name="id" value={c.id} />
                             <ConfirmButton
-                              title="Delete"
-                              message={`Delete ${c.class_name}?`}
+                              title={t.common.delete}
+                              message={format(t.classes.confirmDeleteClass, { name: c.class_name })}
                               className="inline-flex h-8 w-8 items-center justify-center rounded-lg hover:bg-red-50"
                             >
                               <Trash2 size={15} />
@@ -141,9 +144,7 @@ export default async function ClassesPage() {
             </tbody>
           </table>
           <p className="border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-            <span className="font-medium text-slate-700">Safe record management.</span> Classes with
-            enrollments, teacher assignments, or exams cannot be deleted. Deactivate them to keep
-            history intact.
+            <span className="font-medium text-slate-700">{t.classes.safeRecordManagement}.</span> {t.classes.safeRecordManagementBody}
           </p>
         </div>
       )}

@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Field, Input, SubmitButton, FormError } from "@/components/ui/Form";
 import { createTeacherAction, updateTeacherAction, type FormState } from "./actions";
 import type { ClassRow, Subject, Teacher } from "@/lib/types";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 const initialState: FormState = { error: null };
 
@@ -22,24 +23,25 @@ export function TeacherForm({
 }) {
   const action = teacher ? updateTeacherAction : createTeacherAction;
   const [state, formAction] = useActionState(action, initialState);
+  const t = useDictionary();
 
   return (
     <form action={formAction} className="max-w-2xl space-y-5">
       {teacher && <input type="hidden" name="id" value={teacher.id} />}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Full name">
+        <Field label={t.teachers.fullName}>
           <Input name="full_name" required defaultValue={teacher?.full_name} placeholder="Ahmed Raza" />
         </Field>
-        <Field label="Phone">
+        <Field label={t.teachers.phone}>
           <Input name="phone" defaultValue={teacher?.phone ?? ""} placeholder="0301 2345678" />
         </Field>
-        <Field label="Email">
+        <Field label={t.teachers.email}>
           <Input type="email" name="email" defaultValue={teacher?.email ?? ""} placeholder="name@manbaulhuda.edu" />
         </Field>
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium text-slate-700">Subjects</p>
+        <p className="mb-2 text-sm font-medium text-slate-700">{t.teachers.subjects}</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {subjects.map((s) => (
             <label key={s.id} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
@@ -53,12 +55,12 @@ export function TeacherForm({
               {s.name}
             </label>
           ))}
-          {subjects.length === 0 && <p className="text-sm text-slate-400">Add subjects first from the Subjects page.</p>}
+          {subjects.length === 0 && <p className="text-sm text-slate-400">{t.teachers.addSubjectsFirst}</p>}
         </div>
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium text-slate-700">Assigned classes</p>
+        <p className="mb-2 text-sm font-medium text-slate-700">{t.teachers.assignedClasses}</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {classes.map((c) => (
             <label key={c.id} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
@@ -72,12 +74,12 @@ export function TeacherForm({
               {c.class_name}
             </label>
           ))}
-          {classes.length === 0 && <p className="text-sm text-slate-400">Add classes first from the Classes page.</p>}
+          {classes.length === 0 && <p className="text-sm text-slate-400">{t.teachers.addClassesFirst}</p>}
         </div>
       </div>
 
       <FormError error={state.error} />
-      <SubmitButton>{teacher ? "Save changes" : "Create teacher"}</SubmitButton>
+      <SubmitButton>{teacher ? t.common.saveChanges : t.teachers.addTeacher}</SubmitButton>
     </form>
   );
 }
