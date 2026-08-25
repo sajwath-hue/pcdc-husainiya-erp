@@ -1,0 +1,335 @@
+// PCDC Husainiya ERP — Prisma schema
+// SQLite is used for zero-dependency local/dev deployment. Swap the
+// datasource provider/url to postgresql + DATABASE_URL for production
+// without changing application code (all queries go through Prisma).
+//
+// NOTE: SQLite does not support native Prisma `enum` types, so status /
+// role / type fields below are plain `String` columns. The allowed values
+// for each are defined and validated in lib/loan/constants.ts (source of
+// truth) and lib/loan/validation.ts (zod schemas) — treat the comments
+// here as documentation of that same set, not as enforced by the DB.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Users / Auth / RBAC
+// ---------------------------------------------------------------------------
+
+/// role: LOAN_OFFICER | FINANCE | ADMIN | BOARD | AUDITOR
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions             Session[]
+  loansCreated         Loan[]              @relation("LoanCreatedBy")
+  loansApproved        Loan[]              @relation("LoanApprovedBy")
+  disbursements        Disbursement[]      @relation("DisbursedBy")
+  signedAgreements     SignedAgreement[]   @relation("AgreementUploadedBy")
+  verifiedAgreements   SignedAgreement[]   @relation("AgreementVerifiedBy")
+  payments             Payment[]           @relation("PaymentReceivedBy")
+  notices              Notice[]            @relation("NoticeGeneratedBy")
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Organization settings (PCDC letterhead details used on generated docs)
+// ---------------------------------------------------------------------------
+
+model OrgSettings {
+  id            String  @id @default("default")
+  orgName       String  @default("Husainiya PCDC")
+  orgNameTamil  String  @default("ஹுசைனியா PCDC")
+  address       String  @default("")
+  contactPhone  String  @default("")
+  contactEmail  String  @default("")
+  logoPath      String?
+  updatedAt     DateTime @updatedAt
+}
+
+// A yearly sequence counter used to mint immutable, human-readable
+// reference numbers (loan agreements, notices) without race conditions.
+model SequenceCounter {
+  key   String @id // e.g. "LOAN-2026", "NOTICE-2026"
+  value Int    @default(0)
+}
+
+// ---------------------------------------------------------------------------
+// Borrower profile (master record; a borrower may hold multiple loans)
+// ---------------------------------------------------------------------------
+
+model Borrower {
+  id             String   @id @default(cuid())
+  applicantCode  String   @unique // human-friendly Applicant ID, e.g. APP-0001
+  name           String
+  nic            String
+  address        String
+  contactNumber  String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  loans Loan[]
+}
+
+// ---------------------------------------------------------------------------
+// Loan (the existing PCDC Loan Application, extended in place)
+// ---------------------------------------------------------------------------
+
+/// loanStatus: PENDING | APPROVED | REJECTED | DISBURSED | ACTIVE | COMPLETED | DEFAULTED | CANCELLED
+/// agreementStatus: NOT_GENERATED | GENERATED
+/// signedAgreementStatus: NOT_GENERATED | GENERATED | AWAITING_SIGNATURE | SIGNED | UPLOADED | VERIFIED
+model Loan {
+  id                    String    @id @default(cuid())
+  loanReferenceNumber   String?   @unique // immutable once assigned (on approval)
+
+  borrowerId            String
+  applicantName         String
+  nic                   String
+  address                String
+  contactNumber         String
+
+  requestedAmount       Float
+  approvedAmount        Float?
+  loanPurpose           String
+
+  approvalDate          DateTime?
+  disbursementDate      DateTime?
+
+  monthlyInstalment     Float?
+  numberOfInstalments   Int?
+  firstPaymentDueDate   DateTime?
+
+  loanStatus            String    @default("PENDING")
+  outstandingPrincipal  Float     @default(0)
+  outstandingAmount     Float     @default(0)
+
+  agreementStatus       String    @default("NOT_GENERATED")
+  signedAgreementStatus String    @default("NOT_GENERATED")
+
+  createdAt             DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  createdById           String
+  approvedById          String?
+
+  borrower      Borrower           @relation(fields: [borrowerId], references: [id])
+  createdBy     User               @relation("LoanCreatedBy", fields: [createdById], references: [id])
+  approvedBy    User?              @relation("LoanApprovedBy", fields: [approvedById], references: [id])
+
+  agreements       LoanAgreement[]
+  signedAgreements SignedAgreement[]
+  disbursement     Disbursement?
+  instalments      Instalment[]
+  payments         Payment[]
+  notices          Notice[]
+  auditLogs        AuditLog[]
+
+  @@index([borrowerId])
+  @@index([loanStatus])
+}
+
+// ---------------------------------------------------------------------------
+// Loan Agreement (system-generated PDF from the PCDC template)
+// ---------------------------------------------------------------------------
+
+model LoanAgreement {
+  id           String   @id @default(cuid())
+  loanId       String
+  version      Int      @default(1)
+  filePath     String
+  generatedAt  DateTime @default(now())
+  generatedById String
+  isCurrent    Boolean  @default(true)
+
+  loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@index([loanId])
+}
+
+// ---------------------------------------------------------------------------
+// Signed Agreement uploads (kept as an append-only, auditable history)
+// ---------------------------------------------------------------------------
+
+/// verificationStatus: PENDING | VERIFIED | REJECTED
+model SignedAgreement {
+  id                 String    @id @default(cuid())
+  loanId             String
+  fileName           String
+  fileType           String
+  filePath           String
+  uploadedById       String
+  uploadedAt         DateTime  @default(now())
+  verificationStatus String    @default("PENDING")
+  verifiedById       String?
+  verifiedAt         DateTime?
+  isCurrent          Boolean   @default(true) // false once replaced; never deleted
+
+  loan       Loan  @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  uploadedBy User  @relation("AgreementUploadedBy", fields: [uploadedById], references: [id])
+  verifiedBy User? @relation("AgreementVerifiedBy", fields: [verifiedById], references: [id])
+
+  @@index([loanId])
+}
+
+// ---------------------------------------------------------------------------
+// Disbursement
+// ---------------------------------------------------------------------------
+
+model Disbursement {
+  id               String   @id @default(cuid())
+  loanId           String   @unique
+  disbursementDate DateTime
+  approvedAmount   Float
+  disbursedAmount  Float
+  paymentMethod    String
+  bankCashRef      String?
+  voucherNumber    String
+  authorizedById   String
+  notes            String?
+  createdAt        DateTime @default(now())
+
+  loan         Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  authorizedBy User @relation("DisbursedBy", fields: [authorizedById], references: [id])
+}
+
+// ---------------------------------------------------------------------------
+// Repayment schedule
+// ---------------------------------------------------------------------------
+
+/// status: UPCOMING | DUE | PARTIALLY_PAID | PAID | OVERDUE | WAIVED | CANCELLED
+model Instalment {
+  id               String   @id @default(cuid())
+  loanId           String
+  instalmentNumber Int
+  dueDate          DateTime
+  amount           Float
+  paidAmount       Float    @default(0)
+  balance          Float
+  status           String   @default("UPCOMING")
+  updatedAt        DateTime @updatedAt
+
+  loan     Loan      @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@unique([loanId, instalmentNumber])
+  @@index([loanId])
+  @@index([dueDate])
+}
+
+// ---------------------------------------------------------------------------
+// Payments
+// ---------------------------------------------------------------------------
+
+model Payment {
+  id             String   @id @default(cuid())
+  loanId         String
+  instalmentId   String
+  paymentDate    DateTime @default(now())
+  amountPaid     Float
+  paymentMethod  String
+  receiptNumber  String
+  referenceNumber String?
+  receivedById   String
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  loan       Loan       @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  instalment Instalment @relation(fields: [instalmentId], references: [id], onDelete: Cascade)
+  receivedBy User       @relation("PaymentReceivedBy", fields: [receivedById], references: [id])
+
+  @@index([loanId])
+  @@index([instalmentId])
+}
+
+// ---------------------------------------------------------------------------
+// Notices (Payment Reminder / Second Reminder / Final Notice)
+// ---------------------------------------------------------------------------
+
+/// noticeType: PAYMENT_REMINDER | SECOND_REMINDER | FINAL_NOTICE
+/// deliveryStatus: NOT_DELIVERED | DELIVERED | ACKNOWLEDGED
+/// deliveryMethod: PRINTED | HAND_DELIVERED | POST | EMAIL | OTHER
+model Notice {
+  id                     String    @id @default(cuid())
+  loanId                 String
+  noticeNumber           String    @unique
+  noticeType             String    @default("PAYMENT_REMINDER")
+  noticeDate             DateTime  @default(now())
+  reason                 String
+  outstandingAmount      Float
+  filePath               String
+  generatedById          String
+  deliveredDate          DateTime?
+  deliveryMethod         String?
+  deliveryStatus         String    @default("NOT_DELIVERED")
+  borrowerAcknowledgement String?
+  notes                  String?
+  createdAt              DateTime  @default(now())
+
+  loan        Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  generatedBy User @relation("NoticeGeneratedBy", fields: [generatedById], references: [id])
+
+  @@index([loanId])
+}
+
+// ---------------------------------------------------------------------------
+// Audit trail — append-only (no update/delete exposed by the app layer)
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  loanId        String?
+  userId        String?
+  action        String
+  previousValue String?
+  newValue      String?
+  createdAt     DateTime @default(now())
+
+  loan Loan? @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([loanId])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Internal notifications
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?  // null = broadcast to all Admin/Board
+  loanId    String?
+  type      String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
