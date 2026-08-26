@@ -5,7 +5,11 @@ import path from "path";
 // directory (gitignored, created on demand). Never serve it as a static
 // public folder — files are streamed back through authenticated API
 // routes only (see app/api/files/[...segments]/route.ts).
-export const STORAGE_ROOT = path.join(process.cwd(), "storage");
+//
+// Overridable via STORAGE_ROOT so a production deployment can point this
+// at a mounted persistent volume (see render.yaml) instead of the
+// container's ephemeral filesystem.
+export const STORAGE_ROOT = process.env.STORAGE_ROOT || path.join(process.cwd(), "storage");
 
 function safeSegment(segment: string): string {
   const cleaned = segment.replace(/[^a-zA-Z0-9._-]/g, "_");

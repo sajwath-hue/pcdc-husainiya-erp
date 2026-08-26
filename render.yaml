@@ -1,0 +1,24 @@
+# Render Blueprint — see DEPLOY.md for the click-through steps.
+# A persistent disk is required (SQLite DB + uploaded documents live on
+# it), which means the "starter" plan or above — Render's free web
+# service tier has no persistent disk and will lose data on every deploy.
+services:
+  - type: web
+    name: pcdc-husainiya-erp
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /login
+    envVars:
+      - key: DATABASE_URL
+        value: file:/data/prod.db
+      - key: STORAGE_ROOT
+        value: /data/storage
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: REMINDER_THRESHOLD_DAYS
+        value: "30"
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
