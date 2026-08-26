@@ -1,16 +1,25 @@
 name: Build Android APK
 
 # GitHub-hosted ubuntu-latest runners ship with the Android SDK
-# preinstalled, so no SDK download step is needed here. Run manually
-# from the Actions tab ("Run workflow"), optionally overriding base_url
-# to point the app at your deployed URL — no code change required.
+# preinstalled, so no SDK download step is needed here.
+#
+# workflow_dispatch (manual "Run workflow" button) only registers once
+# this file is on the repo's default branch, so a `push` trigger is
+# included too — it works on any branch immediately and needs no manual
+# registration. Pushing a change under android/ or to this file rebuilds
+# the APK using whatever appBaseUrl is set in android/gradle.properties.
 on:
+  push:
+    branches: ["**"]
+    paths:
+      - "android/**"
+      - ".github/workflows/build-apk.yml"
   workflow_dispatch:
     inputs:
       base_url:
-        description: "URL the app should load (your deployed Husainiya PCDC ERP)"
+        description: "Override the URL the app should load (defaults to android/gradle.properties#appBaseUrl)"
         required: false
-        default: "https://example.com/login"
+        default: ""
 
 jobs:
   build:
@@ -28,9 +37,15 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
+        env:
+          BASE_URL_OVERRIDE: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || '' }}
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug -PappBaseUrl="${{ inputs.base_url }}"
+          if [ -n "$BASE_URL_OVERRIDE" ]; then
+            ./gradlew assembleDebug -PappBaseUrl="$BASE_URL_OVERRIDE"
+          else
+            ./gradlew assembleDebug
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
