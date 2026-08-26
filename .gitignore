@@ -44,6 +44,15 @@ yarn-error.log*
 # vercel
 .vercel
 
+# android build output (see android/ — the app itself, gradlew/gradle wrapper are tracked)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/captures/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

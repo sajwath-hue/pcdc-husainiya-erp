@@ -1,0 +1,38 @@
+name: Build Android APK
+
+# GitHub-hosted ubuntu-latest runners ship with the Android SDK
+# preinstalled, so no SDK download step is needed here. Run manually
+# from the Actions tab ("Run workflow"), optionally overriding base_url
+# to point the app at your deployed URL — no code change required.
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "URL the app should load (your deployed Husainiya PCDC ERP)"
+        required: false
+        default: "https://example.com/login"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses > /dev/null || true
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug -PappBaseUrl="${{ inputs.base_url }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pcdc-husainiya-erp-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
